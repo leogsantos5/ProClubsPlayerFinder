@@ -1,0 +1,18 @@
+﻿@page "/auth"
+
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "PS5Player")]
+@rendermode InteractiveAuto
+
+<PageTitle>Auth</PageTitle>
+
+<h1>You are authenticated</h1>
+
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+
+<AuthorizeView Roles = "PS5Player">
+    You are a PS5 Player!
+</AuthorizeView>

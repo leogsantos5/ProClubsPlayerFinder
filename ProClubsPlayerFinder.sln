@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34511.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProClubsPlayerFinder", "ProClubsPlayerFinder\ProClubsPlayerFinder\ProClubsPlayerFinder.csproj", "{FBDF736A-0748-43E4-85F5-BD22088CCF7F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProClubsPlayerFinder.Client", "ProClubsPlayerFinder\ProClubsPlayerFinder.Client\ProClubsPlayerFinder.Client.csproj", "{6649A0C5-FC31-42BD-8542-559675200F8F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FBDF736A-0748-43E4-85F5-BD22088CCF7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBDF736A-0748-43E4-85F5-BD22088CCF7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBDF736A-0748-43E4-85F5-BD22088CCF7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBDF736A-0748-43E4-85F5-BD22088CCF7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6649A0C5-FC31-42BD-8542-559675200F8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6649A0C5-FC31-42BD-8542-559675200F8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6649A0C5-FC31-42BD-8542-559675200F8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6649A0C5-FC31-42BD-8542-559675200F8F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {102652DD-1030-40E2-89ED-190F2F1B4AB7}
+	EndGlobalSection
+EndGlobal

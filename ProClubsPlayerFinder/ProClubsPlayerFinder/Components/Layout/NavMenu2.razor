@@ -1,0 +1,49 @@
+﻿@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<div class="top-bar d-flex justify-content-between align-items-center" style="background: linear-gradient(to right, #0DAF10, #015B02); height: 60px;">
+    <div class="text-white fs-3 ms-4 text-3xl font-bold">Pro Clubs Player Finder</div>
+
+    <nav class="d-flex gap-1 me-4 text-xl">
+        <AuthorizeView>
+            <Authorized>
+                <a class="btn-lg text-white font-semibold" href="" Match="NavLinkMatch.All">Home</a>
+                <a class="btn-lg text-white font-semibold" href="counter">Counter</a>
+                <a class="btn-lg text-white font-semibold" href="weather">Weather</a>
+                <a class="btn-lg text-white font-semibold" href="auth">Auth Required</a>              
+                <a href="Account/Manage" class="text-white font-semibold btn-lg">@context.User.Identity?.Name</a>
+                <form action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                    <button type="submit" class="text-white font-semibold btn-lg">Logout</button>
+                </form>
+            </Authorized>
+            <NotAuthorized>
+                <a href="Account/Register" class="text-white font-semibold btn-lg">Register</a>
+                <a href="Account/Login" class="text-white font-semibold btn-lg">Login</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+</div>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
