@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProClubsPlayerFinder", "ProClubsPlayerFinder\ProClubsPlayerFinder\ProClubsPlayerFinder.csproj", "{FBDF736A-0748-43E4-85F5-BD22088CCF7F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProClubsPlayerFinder", "ProClubsPlayerFinder\ProClubsPlayerFinder\ProClubsPlayerFinder.csproj", "{FBDF736A-0748-43E4-85F5-BD22088CCF7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProClubsPlayerFinder.Client", "ProClubsPlayerFinder\ProClubsPlayerFinder.Client\ProClubsPlayerFinder.Client.csproj", "{6649A0C5-FC31-42BD-8542-559675200F8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProClubsPlayerFinder.Client", "ProClubsPlayerFinder\ProClubsPlayerFinder.Client\ProClubsPlayerFinder.Client.csproj", "{6649A0C5-FC31-42BD-8542-559675200F8F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProClubsPlayerFinder.API", "ProClubsPlayerFinder.API\ProClubsPlayerFinder.API.csproj", "{D8731BB1-3E61-463F-9366-D9687C8DBFD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{6649A0C5-FC31-42BD-8542-559675200F8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6649A0C5-FC31-42BD-8542-559675200F8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6649A0C5-FC31-42BD-8542-559675200F8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8731BB1-3E61-463F-9366-D9687C8DBFD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8731BB1-3E61-463F-9366-D9687C8DBFD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8731BB1-3E61-463F-9366-D9687C8DBFD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8731BB1-3E61-463F-9366-D9687C8DBFD5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
