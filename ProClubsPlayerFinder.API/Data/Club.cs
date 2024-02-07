@@ -5,7 +5,7 @@ namespace ProClubsPlayerFinder.API.Data;
 
 public partial class Club
 {
-    public int ClubId { get; set; }
+    public int Id { get; set; }
 
     public int OwnerPlayerId { get; set; }
 

@@ -27,9 +27,9 @@ public partial class ClubsPlayerFinderEafc24Context : DbContext
     {
         modelBuilder.Entity<Club>(entity =>
         {
-            entity.HasKey(e => e.ClubId).HasName("PK__Clubs__D35058E7947E6D35");
+            entity.HasKey(e => e.Id).HasName("PK__Clubs__D35058E7947E6D35");
 
-            entity.Property(e => e.ClubId).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.ClubName).HasMaxLength(50);
             entity.Property(e => e.Console).HasMaxLength(20);
             entity.Property(e => e.Description).HasMaxLength(512);
@@ -42,16 +42,16 @@ public partial class ClubsPlayerFinderEafc24Context : DbContext
 
         modelBuilder.Entity<Player>(entity =>
         {
-            entity.HasKey(e => e.PlayerId).HasName("PK__tmp_ms_x__4A4E74C8A7D90612");
+            entity.HasKey(e => e.Id).HasName("PK__tmp_ms_x__4A4E74C8A7D90612");
 
-            entity.Property(e => e.PlayerId).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Console).HasMaxLength(20);
             entity.Property(e => e.Country).HasMaxLength(20);
             entity.Property(e => e.Email).HasMaxLength(256);
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.GamingPlatformAccountId).HasMaxLength(50);
             entity.Property(e => e.LastName).HasMaxLength(50);
-            entity.Property(e => e.Password).HasMaxLength(20);
+            entity.Property(e => e.PasswordHash).HasMaxLength(20);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
 
             entity.HasOne(d => d.Club).WithMany(p => p.Players)
