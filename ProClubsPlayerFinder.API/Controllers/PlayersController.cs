@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProClubsPlayerFinder.API.Data;
+using ProClubsPlayerFinder.API.DTOs.PlayerDTOs;
 
 namespace ProClubsPlayerFinder.API.Controllers
 {
@@ -18,68 +19,29 @@ namespace ProClubsPlayerFinder.API.Controllers
             _context = context;
         }
 
-        // GET: Players
-        public async Task<IActionResult> Index()
-        {
-            var clubsPlayerFinderEafc24Context = _context.Players.Include(p => p.Club);
-            return View(await clubsPlayerFinderEafc24Context.ToListAsync());
-        }
-
-        // GET: Players/Create
-        public IActionResult Create()
-        {
-            ViewData["ClubId"] = new SelectList(_context.Clubs, "ClubId", "ClubId");
-            return View();
-        }
-
         // POST: Players/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        // To protect from overposting attacks, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost("Players/CreatePlayer")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PlayerId,ClubId,Email,Password,FirstName,LastName,DateOfBirth,PhoneNumber,Country,GamingPlatformAccountId,Console")] Player player)
+        public async Task<IActionResult> Create([Bind("Email,Password,FirstName,LastName,DateOfBirth,PhoneNumber,Country,GamingPlatformAccountId,Console")] PlayerCreateDto playerToCreate)
         {
-            if (ModelState.IsValid)
+            var player = new ApiUser
             {
-                _context.Add(player);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ClubId"] = new SelectList(_context.Clubs, "ClubId", "ClubId", player.ClubId);
-            return View(player);
-        }
+                Email = playerToCreate.Email,
+                //PasswordHash = playerToCreate.Password, // falta função de hashing
+                FirstName = playerToCreate.FirstName,
+                LastName = playerToCreate.LastName,
+                DateOfBirth = playerToCreate.DateOfBirth,
+                PhoneNumber = playerToCreate.PhoneNumber,
+                Country = playerToCreate.Country,
+                GamingPlatformAccountId = playerToCreate.GamingPlatformAccountId,
+                Console = playerToCreate.Console
+            };
 
-        // GET: Players/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var player = await _context.Players.FindAsync(id);
-            if (player == null)
-            {
-                return NotFound();
-            }
-            ViewData["ClubId"] = new SelectList(_context.Clubs, "ClubId", "ClubId", player.ClubId);
-            return View(player);
-        }
-
-        // POST: Players/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var player = await _context.Players.FindAsync(id);
-            if (player != null)
-            {
-                _context.Players.Remove(player);
-            }
-
+            _context.Players.Add(player);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            return CreatedAtAction("GetPlayer", new { id = player.Id }, player);
+        }        
 
     }
 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ProClubsPlayerFinder.API.Data;
 
-public partial class ClubsPlayerFinderEafc24Context : DbContext
+public partial class ClubsPlayerFinderEafc24Context : IdentityDbContext<ApiUser>
 {
     public ClubsPlayerFinderEafc24Context()
     {
@@ -17,7 +18,7 @@ public partial class ClubsPlayerFinderEafc24Context : DbContext
 
     public virtual DbSet<Club> Clubs { get; set; }
 
-    public virtual DbSet<Player> Players { get; set; }
+    public virtual DbSet<ApiUser> Players { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -25,6 +26,8 @@ public partial class ClubsPlayerFinderEafc24Context : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Club>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Clubs__D35058E7947E6D35");
@@ -40,7 +43,7 @@ public partial class ClubsPlayerFinderEafc24Context : DbContext
                 .HasConstraintName("FK__Clubs__OwnerPlay__52593CB8");
         });
 
-        modelBuilder.Entity<Player>(entity =>
+        modelBuilder.Entity<ApiUser>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__tmp_ms_x__4A4E74C8A7D90612");
 

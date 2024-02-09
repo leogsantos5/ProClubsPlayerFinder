@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProClubsPlayerFinder.API.Data;
+using ProClubsPlayerFinder.API.DTOs.ClubDTOs;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace ProClubsPlayerFinder.API.Controllers
@@ -43,11 +44,26 @@ namespace ProClubsPlayerFinder.API.Controllers
         // To protect from overposting attacks, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost("Clubs/CreateClub")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult<Club>> CreateClub([Bind("ClubId,OwnerPlayerId,Description,ClubName,Console")] Club clubToCreate)
+        public async Task<ActionResult<Club>> CreateClub([Bind("OwnerPlayerId,Description,ClubName,Console")] ClubCreateDto clubToCreate)
         {
-            _context.Clubs.Add(clubToCreate);
+            var club = new Club
+            {
+                Description = clubToCreate.Description,
+                OwnerPlayerId = clubToCreate.OwnerPlayerId.ToString(),
+                ClubName = clubToCreate.ClubName,
+                Console = clubToCreate.Console,
+                Players = new List<ApiUser>()
+            };
+
+            ApiUser? playerOwner = await _context.Players.FirstOrDefaultAsync(player => player.Id == clubToCreate.OwnerPlayerId.ToString());
+            if (playerOwner == null)
+                return NotFound("Could not find a player with that id");
+            else
+                club.OwnerPlayer = playerOwner;
+
+            _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetClub), new { id = clubToCreate.Id }, clubToCreate);
+            return CreatedAtAction(nameof(GetClub), new { id = club.Id }, club);
         }
 
         // PUT: Changes Club info
