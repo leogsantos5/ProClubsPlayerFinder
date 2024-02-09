@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,24 +13,28 @@ using static System.Reflection.Metadata.BlobBuilder;
 
 namespace ProClubsPlayerFinder.API.Controllers
 {
-    public class ClubsController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ClubsController : ControllerBase
     {
         private readonly ClubsPlayerFinderEafc24Context _context;
+        private readonly UserManager<ApiUser> _userManager;
 
-        public ClubsController(ClubsPlayerFinderEafc24Context context)
+        public ClubsController(UserManager<ApiUser> userManager, ClubsPlayerFinderEafc24Context context)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: All Clubs
-        [HttpGet("Clubs/GetClubs")]
+        [HttpGet("GetClubs")]
         public async Task<ActionResult<IEnumerable<Club>>> GetClubs()
         {
             return Ok(await _context.Clubs.ToListAsync());
         }
 
         // GET: Gets specific Club
-        [HttpGet("Clubs/GetClub/{id}")]
+        [HttpGet("GetClub/{id}")]
         public async Task<ActionResult<Club>> GetClub(int? id)
         {
             var club = await _context.Clubs.Include(club => club.Players).FirstOrDefaultAsync(c => c.Id == id);
@@ -42,10 +47,27 @@ namespace ProClubsPlayerFinder.API.Controllers
 
         // POST: Creates a Club
         // To protect from overposting attacks, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost("Clubs/CreateClub")]
+        [HttpPost("CreateClub")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult<Club>> CreateClub([Bind("OwnerPlayerId,Description,ClubName,Console")] ClubCreateDto clubToCreate)
         {
+            // Get the authenticated user
+            var authenticatedPlayer = await _userManager.GetUserAsync(User);
+            if (authenticatedPlayer == null)
+                return Unauthorized("Player not authenticated");
+
+            if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Club Owner"))
+                return Forbid("You already are a Club Owner. You have to delete this club to create another club.");
+            else if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Player"))
+                return Forbid("You already are a Player. You have to leave this club to create your club.");
+
+            var playerOwner = await _userManager.FindByIdAsync(clubToCreate.OwnerPlayerId.ToString());
+            if (playerOwner == null)
+                return NotFound("Could not find a player with that id");
+
+            await _userManager.RemoveFromRoleAsync(playerOwner, "Free Agent");
+            await _userManager.AddToRoleAsync(playerOwner, "Club Owner");
+
             var club = new Club
             {
                 Description = clubToCreate.Description,
@@ -55,11 +77,7 @@ namespace ProClubsPlayerFinder.API.Controllers
                 Players = new List<ApiUser>()
             };
 
-            ApiUser? playerOwner = await _context.Players.FirstOrDefaultAsync(player => player.Id == clubToCreate.OwnerPlayerId.ToString());
-            if (playerOwner == null)
-                return NotFound("Could not find a player with that id");
-            else
-                club.OwnerPlayer = playerOwner;
+            club.OwnerPlayer = playerOwner;
 
             _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
@@ -67,7 +85,7 @@ namespace ProClubsPlayerFinder.API.Controllers
         }
 
         // PUT: Changes Club info
-        [HttpPut("Clubs/ChangeClub/{id}")]
+        [HttpPut("ChangeClub/{id}")]
         public async Task<ActionResult> ChangeClub(int? id, Club clubInfoToUpdate)
         {
             if (id != clubInfoToUpdate.Id)
@@ -85,7 +103,7 @@ namespace ProClubsPlayerFinder.API.Controllers
         }
 
         // DELETE: Deletes a Club
-        [HttpDelete("Clubs/DeleteClub/{id}")]
+        [HttpDelete("DeleteClub/{id}")]
         public async Task<IActionResult> DeleteClub(int id)
         {
             var club = await _context.Clubs.FindAsync(id);
@@ -98,7 +116,7 @@ namespace ProClubsPlayerFinder.API.Controllers
         }
 
         // GET: Gets players of a Club
-        [HttpGet("Clubs/GetClubPlayers/{id}")]
+        [HttpGet("GetClubPlayers/{id}")]
         public async Task<IActionResult> GetClubPlayers(int? id)
         {
             var clubPlayers = await _context.Clubs.Where(club => club.Id == id).SelectMany(club => club.Players).ToListAsync();
