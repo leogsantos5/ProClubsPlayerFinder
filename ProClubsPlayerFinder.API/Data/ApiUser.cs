@@ -2,7 +2,7 @@
 
 namespace ProClubsPlayerFinder.API.Data
 {
-    public class ApiUser : IdentityUser
+    public class ApiUser : IdentityUser // This is the old Player class
     {
         public int? ClubId { get; set; }
 
@@ -10,7 +10,7 @@ namespace ProClubsPlayerFinder.API.Data
 
         public string? LastName { get; set; }
 
-        public DateOnly? DateOfBirth { get; set; }
+        public DateTime? DateOfBirth { get; set; }
 
         public string? Country { get; set; }
 
