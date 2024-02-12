@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,9 @@ namespace ProClubsPlayerFinder.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
-        //private readonly ClubsPlayerFinderEafc24Context context;
         private readonly UserManager<ApiUser> userManager;
         private readonly IConfiguration configuration;
 

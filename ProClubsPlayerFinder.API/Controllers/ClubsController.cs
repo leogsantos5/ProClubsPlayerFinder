@@ -15,6 +15,7 @@ namespace ProClubsPlayerFinder.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ClubsController : ControllerBase
     {
         private readonly ClubsPlayerFinderEafc24Context _context;
@@ -49,6 +50,7 @@ namespace ProClubsPlayerFinder.API.Controllers
         // To protect from overposting attacks, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost("CreateClub")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Free Agent")]
         public async Task<ActionResult<Club>> CreateClub([Bind("OwnerPlayerId,Description,ClubName,Console")] ClubCreateDto clubToCreate)
         {
             // Get the authenticated user
@@ -86,6 +88,7 @@ namespace ProClubsPlayerFinder.API.Controllers
 
         // PUT: Changes Club info
         [HttpPut("ChangeClub/{id}")]
+        [Authorize(Roles = "Club Owner")]
         public async Task<ActionResult> ChangeClub(int? id, Club clubInfoToUpdate)
         {
             if (id != clubInfoToUpdate.Id)
@@ -104,6 +107,7 @@ namespace ProClubsPlayerFinder.API.Controllers
 
         // DELETE: Deletes a Club
         [HttpDelete("DeleteClub/{id}")]
+        [Authorize(Roles = "Club Owner")]
         public async Task<IActionResult> DeleteClub(int id)
         {
             var club = await _context.Clubs.FindAsync(id);
