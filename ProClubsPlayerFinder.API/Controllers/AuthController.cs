@@ -2,8 +2,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using NuGet.Protocol.Plugins;
 using ProClubsPlayerFinder.API.Data;
 using ProClubsPlayerFinder.API.DTOs.ApiUserDTOs;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ProClubsPlayerFinder.API.Controllers
 {
@@ -12,13 +17,15 @@ namespace ProClubsPlayerFinder.API.Controllers
 
     public class AuthController : ControllerBase
     {
-        private readonly ClubsPlayerFinderEafc24Context context;
+        //private readonly ClubsPlayerFinderEafc24Context context;
         private readonly UserManager<ApiUser> userManager;
+        private readonly IConfiguration configuration;
 
-        public AuthController(UserManager<ApiUser> _userManager, ClubsPlayerFinderEafc24Context _context)
+        public AuthController(UserManager<ApiUser> _userManager, IConfiguration _configuration)
         {
-            context = _context;
+            //context = _context;
             userManager = _userManager;
+            configuration = _configuration;
         }
         [HttpPost]
         [Route("Register")]
@@ -43,9 +50,9 @@ namespace ProClubsPlayerFinder.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrEmpty(apiUserDto.Role))
+            if (string.IsNullOrEmpty(apiUserDto.Role)) // It will always go to this if statement
                 await userManager.AddToRoleAsync(player, "Free Agent");
-            else
+            else // Just in unexpected cases, to not give error
                 await userManager.AddToRoleAsync(player, apiUserDto.Role);
 
             await userManager.AddToRoleAsync(player, apiUserDto.Role);
@@ -54,7 +61,7 @@ namespace ProClubsPlayerFinder.API.Controllers
 
         [HttpPost]
         [Route("Login")]
-        public async Task<IActionResult> Login(LoginUserDto apiUserDto)
+        public async Task<ActionResult<AuthResponse>> Login(LoginUserDto apiUserDto)
         {
             var player = await userManager.FindByEmailAsync(apiUserDto.Email);
             if (player == null)
@@ -65,7 +72,47 @@ namespace ProClubsPlayerFinder.API.Controllers
             if (player == null || passwordValid == false)
                 return Unauthorized(apiUserDto);
 
-            return Accepted();
+            var tokenString = await GenerateTokenAsync(player);
+
+            var response = new AuthResponse
+            {
+                Email = apiUserDto.Email,
+                Token = tokenString,
+                UserId = player.Id
+            };
+
+            return response;
+        }
+
+        private async Task<string> GenerateTokenAsync(ApiUser user)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]!));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var roles = await userManager.GetRolesAsync(user);
+            var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role)).ToList();
+
+            var userClaims = await userManager.GetClaimsAsync(user);
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("uid", user.Id)
+            }
+            .Union(userClaims)
+            .Union(roleClaims);
+
+            var token = new JwtSecurityToken(
+                issuer: configuration["JwtSettings:Issuer"],
+                audience: configuration["JwtSettings:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(Convert.ToInt32(configuration["JwtSettings:Duration"])),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }
