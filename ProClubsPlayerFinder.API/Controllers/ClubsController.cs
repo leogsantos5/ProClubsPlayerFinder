@@ -58,10 +58,10 @@ namespace ProClubsPlayerFinder.API.Controllers
             if (authenticatedPlayer == null)
                 return Unauthorized("Player not authenticated");
 
-            if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Club Owner"))
-                return Forbid("You already are a Club Owner. You have to delete this club to create another club.");
-            else if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Player"))
-                return Forbid("You already are a Player. You have to leave this club to create your club.");
+            //if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Club Owner"))
+            //    return Forbid("You already are a Club Owner. You have to delete this club to create another club.");
+            //else if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Player"))
+            //    return Forbid("You already are a Player. You have to leave this club to create your club.");
 
             var playerOwner = await _userManager.FindByIdAsync(clubToCreate.OwnerPlayerId.ToString());
             if (playerOwner == null)
@@ -80,6 +80,7 @@ namespace ProClubsPlayerFinder.API.Controllers
             };
 
             club.OwnerPlayer = playerOwner;
+            club.Players.Add(playerOwner);
 
             _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
