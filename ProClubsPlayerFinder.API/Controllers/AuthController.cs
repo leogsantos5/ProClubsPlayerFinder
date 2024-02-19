@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NuGet.Protocol.Plugins;
 using ProClubsPlayerFinder.API.Data;
-using ProClubsPlayerFinder.API.DTOs.ApiUserDTOs;
+using ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs;
+using ProClubsPlayerFinder.ClassLibrary.DTOs.ClassLibraryUserDTOs;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -96,7 +97,7 @@ namespace ProClubsPlayerFinder.API.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Sub, user.FirstName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim("uid", user.Id)

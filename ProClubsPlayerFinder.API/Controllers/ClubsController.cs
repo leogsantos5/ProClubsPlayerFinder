@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProClubsPlayerFinder.API.Data;
-using ProClubsPlayerFinder.API.DTOs.ClubDTOs;
+using ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace ProClubsPlayerFinder.API.Controllers

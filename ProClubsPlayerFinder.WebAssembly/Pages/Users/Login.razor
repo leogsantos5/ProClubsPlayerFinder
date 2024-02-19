@@ -1,5 +1,6 @@
 ﻿@page "/users/login"
-@inject ApiAuthStateProvider authStateProvider
+
+@inject CustomAuthStateProvider authStateProvider
 @inject IAuthenticationService authService
 
  <h3>Login</h3>
@@ -32,14 +33,14 @@
     {
         try
         {
-            var tokenString = await authService.AuthenticateAsync(LoginModel);
+            var authResponse = await authService.LoginAsync(LoginModel);
 
-            if (tokenString == false)
+            if (string.IsNullOrEmpty(authResponse.Token))
                 navManager.NavigateTo("/users/login");
             else
             {
-                var customAuthStateProvider = (ApiAuthStateProvider) authStateProvider;
-                customAuthStateProvider.UpdateAuthenticationState(Constants.JWTToken);
+                LoginModel = new();
+                await authStateProvider.UpdateAuthenticationState(authResponse.Token);
                 navManager.NavigateTo("/");
             }
 

@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs;
+using System.ComponentModel.DataAnnotations;
 
-namespace ProClubsPlayerFinder.API.DTOs.ApiUserDTOs
+namespace ProClubsPlayerFinder.ClassLibrary.DTOs.ClassLibraryUserDTOs
 {
     public class ApiUserDto : LoginUserDto
     {

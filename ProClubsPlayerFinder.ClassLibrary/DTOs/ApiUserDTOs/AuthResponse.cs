@@ -1,4 +1,4 @@
-﻿namespace ProClubsPlayerFinder.API.DTOs.ApiUserDTOs
+﻿namespace ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs
 {
     public class AuthResponse
     {

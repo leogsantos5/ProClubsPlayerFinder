@@ -8,23 +8,26 @@ namespace ProClubsPlayerFinder.WebApp.Services.Authentication
     public class AuthenticationService : IAuthenticationService
     {
         private readonly IClient httpClient;
+        private readonly ILocalStorageService localStorage;
         private readonly AuthenticationStateProvider authenticationStateProvider;
 
-        public AuthenticationService(IClient httpClient, AuthenticationStateProvider authenticationStateProvider)
+        public AuthenticationService(IClient httpClient, ILocalStorageService localStorage, AuthenticationStateProvider authenticationStateProvider)
         {
             this.httpClient = httpClient;
+            this.localStorage = localStorage;
             this.authenticationStateProvider = authenticationStateProvider;
         }
-        public async Task<string> AuthenticateAsync(LoginUserDto loginModel)
+        public async Task<bool> AuthenticateAsync(LoginUserDto loginModel)
         {
             var response = await httpClient.LoginAsync(loginModel);
 
-            return response.Token;
             // Store Token
             //await localStorage.SetItemAsync("accessToken", response.Token);
 
             // Change auth state of app
             //await ((ApiAuthStateProvider)authenticationStateProvider).LoggedIn();
+
+            return true;
         }
 
         public async Task Logout()

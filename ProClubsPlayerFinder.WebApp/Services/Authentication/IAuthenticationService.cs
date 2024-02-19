@@ -4,7 +4,7 @@ namespace ProClubsPlayerFinder.WebApp.Services.Authentication
 {
     public interface IAuthenticationService
     {
-        Task<string> AuthenticateAsync(LoginUserDto loginModel);
+        Task<bool> AuthenticateAsync(LoginUserDto loginModel);
 
         public Task Logout();
     }

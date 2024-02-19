@@ -1,7 +1,6 @@
-﻿using ProClubsPlayerFinder.API.Data;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace ProClubsPlayerFinder.API.DTOs.ClubDTOs
+namespace ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs
 {
     public class ClubCreateDto
     {
