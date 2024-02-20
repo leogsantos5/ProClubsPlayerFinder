@@ -51,11 +51,6 @@ namespace ProClubsPlayerFinder.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrEmpty(apiUserDto.Role)) // It will always go to this if statement
-                await userManager.AddToRoleAsync(player, "Free Agent");
-            else // Just in unexpected cases, to not give error
-                await userManager.AddToRoleAsync(player, apiUserDto.Role);
-
             await userManager.AddToRoleAsync(player, apiUserDto.Role);
             return Accepted();
         }

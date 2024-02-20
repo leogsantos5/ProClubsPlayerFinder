@@ -20,23 +20,45 @@
             <InputText class="form-control" @bind-Value="RegistrationModel.Email" />
             <ValidationMessage For="@(() => RegistrationModel.Email)" />
         </div>
-        <br />
         <div>
             <label for="first name">First Name</label>
             <InputText class="form-control" @bind-Value="RegistrationModel.FirstName" />
             <ValidationMessage For="@(() => RegistrationModel.FirstName)" />
         </div>
-        <br />
         <div>
             <label for="last name">Last Name</label>
             <InputText class="form-control" @bind-Value="RegistrationModel.LastName" />
             <ValidationMessage For="@(() => RegistrationModel.LastName)" />
         </div>
-        <br />
         <div>
             <label for="password">Password</label>
             <InputText class="form-control" type="password" @bind-Value="RegistrationModel.Password" />
             <ValidationMessage For="@(() => RegistrationModel.Password)" />
+        </div>
+        <div>
+            <label for="dateOfBirth">Date of Birth</label>
+            <InputDate class="form-control" @bind-Value="RegistrationModel.DateOfBirth" />
+            <ValidationMessage For="@(() => RegistrationModel.DateOfBirth)" />
+        </div>
+        <div>
+            <label for="country">Country</label>
+            <InputText class="form-control" @bind-Value="RegistrationModel.Country" />
+            <ValidationMessage For="@(() => RegistrationModel.Country)" />
+        </div>
+        <div>
+            <label for="console">Console</label>
+            <select class="form-control" @bind="RegistrationModel.Console" >
+                <option> Choose a console: </option>
+                <option checked="@(RegistrationModel.Console == Constants.Consoles[0])" value="@Constants.Consoles[0]"> PS5 </option>
+                <option checked="@(RegistrationModel.Console == Constants.Consoles[1])" value="@Constants.Consoles[1]"> XBox X </option>
+                <option checked="@(RegistrationModel.Console == Constants.Consoles[2])" value="@Constants.Consoles[2]"> PC </option>
+            </select>
+            <ValidationMessage For="@(() => RegistrationModel.Console)" />
+        </div>
+        <div>
+            <label for="gamingPlatformAccountId">Gaming Platform Account ID</label>
+            <InputText class="form-control" @bind-Value="RegistrationModel.GamingPlatformAccountId" />
+            <ValidationMessage For="@(() => RegistrationModel.GamingPlatformAccountId)" />
         </div>
 
         <button type="submit" class="btn btn-primary btn-block"> Register </button>
@@ -45,32 +67,56 @@
 </div>
 
 @code {
-    ApiUserDto RegistrationModel = new ApiUserDto
-    {
-        Role = "Free Agent"
-    };
+    List<string> europeanCountries = Constants.EuropeanCountries;
+    List<string> consoles = Constants.Consoles;
+
+    ApiUserDto RegistrationModel = new ApiUserDto();
     string message = string.Empty;
 
     private async Task HandleRegistration()
     {
-        RegistrationModel.Role = "Free Agent";
-        try
+        if (!IsPasswordValid(RegistrationModel.Password))
         {
-            await authService.RegisterAsync(RegistrationModel);
-            navManager.NavigateTo("/users/login");
+            await js.InvokeVoidAsync("alert", "Password must have at least 8 characters, one number, one letter, and one special character");
+            return;
         }
-        catch (ApiException apiExc)
+        else if (europeanCountries.Contains(RegistrationModel.Country!) == false)
         {
-            if (apiExc.StatusCode >= 200 && apiExc.StatusCode < 300)
-                NavigateToLogin();
+            await js.InvokeVoidAsync("alert", "Please enter a valid country.");
+            return;
+        }
+        else if (consoles.Contains(RegistrationModel.Console!) == false)
+        {
+            await js.InvokeVoidAsync("alert", "Please enter a valid console.");
+            return;
+        }
+        else
+        {
+            RegistrationModel.Role = "Free Agent";
+            try
+            {
+                var result = await authService.RegisterAsync(RegistrationModel);
+                if (result.IsSuccessStatusCode)
+                    navManager.NavigateTo("/users/login");
+            }
+            catch (ApiException apiExc)
+            {
+                if (apiExc.StatusCode >= 200 && apiExc.StatusCode < 300)
+                    NavigateToLogin();
 
-            message = apiExc.Response;
+                message = apiExc.Response;
+            }
         }
     }
 
     private void NavigateToLogin()
     {
         navManager.NavigateTo("/users/login");
+    }
+
+    private bool IsPasswordValid(string password)
+    {
+        return password.Length >= 8 && password.Any(char.IsDigit) && password.Any(char.IsLetter);
     }
 }
 
