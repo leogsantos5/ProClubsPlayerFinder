@@ -3,7 +3,7 @@
 @inject CustomAuthStateProvider authStateProvider
 @inject IAuthenticationService authService
 
-<h3>Register as a Free Agent</h3>
+<h3 class="text-white">Register as a Free Agent</h3>
 
 @if (string.IsNullOrEmpty(message) == false)
 {
@@ -11,42 +11,42 @@
         <p>@message</p>
     </div>
 }
-<div class="card-body">
+<div class="card-body col-lg-3">
     <EditForm Model="RegistrationModel" OnValidSubmit="HandleRegistration">
         <DataAnnotationsValidator />
         <ValidationSummary />
         <div>
-            <label for="email">Email Address</label>
+            <label for="email" class="text-white">Email Address</label>
             <InputText class="form-control" @bind-Value="RegistrationModel.Email" />
             <ValidationMessage For="@(() => RegistrationModel.Email)" />
         </div>
         <div>
-            <label for="first name">First Name</label>
+            <label for="first name" class="text-white">First Name</label>
             <InputText class="form-control" @bind-Value="RegistrationModel.FirstName" />
             <ValidationMessage For="@(() => RegistrationModel.FirstName)" />
         </div>
         <div>
-            <label for="last name">Last Name</label>
+            <label for="last name" class="text-white">Last Name</label>
             <InputText class="form-control" @bind-Value="RegistrationModel.LastName" />
             <ValidationMessage For="@(() => RegistrationModel.LastName)" />
         </div>
         <div>
-            <label for="password">Password</label>
+            <label for="password" class="text-white">Password</label>
             <InputText class="form-control" type="password" @bind-Value="RegistrationModel.Password" />
             <ValidationMessage For="@(() => RegistrationModel.Password)" />
         </div>
         <div>
-            <label for="dateOfBirth">Date of Birth</label>
+            <label for="dateOfBirth" class="text-white">Date of Birth</label>
             <InputDate class="form-control" @bind-Value="RegistrationModel.DateOfBirth" />
             <ValidationMessage For="@(() => RegistrationModel.DateOfBirth)" />
         </div>
         <div>
-            <label for="country">Country</label>
+            <label for="country" class="text-white">Country</label>
             <InputText class="form-control" @bind-Value="RegistrationModel.Country" />
             <ValidationMessage For="@(() => RegistrationModel.Country)" />
         </div>
         <div>
-            <label for="console">Console</label>
+            <label for="console" class="text-white">Console</label>
             <select class="form-control" @bind="RegistrationModel.Console" >
                 <option> Choose a console: </option>
                 <option checked="@(RegistrationModel.Console == Constants.Consoles[0])" value="@Constants.Consoles[0]"> PS5 </option>
@@ -56,12 +56,12 @@
             <ValidationMessage For="@(() => RegistrationModel.Console)" />
         </div>
         <div>
-            <label for="gamingPlatformAccountId">Gaming Platform Account ID</label>
+            <label for="gamingPlatformAccountId" class="text-white">Gaming Platform Account ID</label>
             <InputText class="form-control" @bind-Value="RegistrationModel.GamingPlatformAccountId" />
             <ValidationMessage For="@(() => RegistrationModel.GamingPlatformAccountId)" />
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block"> Register </button>
+        <button type="submit" class="btn btn-success btn-block"> Register </button>
     </EditForm>
 
 </div>
@@ -76,20 +76,11 @@
     private async Task HandleRegistration()
     {
         if (!IsPasswordValid(RegistrationModel.Password))
-        {
             await js.InvokeVoidAsync("alert", "Password must have at least 8 characters, one number, one letter, and one special character");
-            return;
-        }
         else if (europeanCountries.Contains(RegistrationModel.Country!) == false)
-        {
             await js.InvokeVoidAsync("alert", "Please enter a valid country.");
-            return;
-        }
         else if (consoles.Contains(RegistrationModel.Console!) == false)
-        {
             await js.InvokeVoidAsync("alert", "Please enter a valid console.");
-            return;
-        }
         else
         {
             RegistrationModel.Role = "Free Agent";
@@ -107,6 +98,7 @@
                 message = apiExc.Response;
             }
         }
+        return;
     }
 
     private void NavigateToLogin()
