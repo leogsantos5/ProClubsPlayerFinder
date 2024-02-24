@@ -3,67 +3,64 @@
 @inject CustomAuthStateProvider authStateProvider
 @inject IAuthenticationService authService
 
-<h3 class="text-white">Register as a Free Agent</h3>
+<div class="d-flex flex-row">
+    <div class="col-lg-4 d-flex flex-column px-5 pt-4" style="background-color: black">
+        <h3 class="text-white">Register as a Free Agent</h3>
 
-@if (string.IsNullOrEmpty(message) == false)
-{
-    <div class="alert alert-danger">
-        <p>@message</p>
+        <EditForm Model="RegistrationModel" OnValidSubmit="HandleRegistration">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <label for="email" class="text-white">Email Address</label>
+                <InputText class="form-control" @bind-Value="RegistrationModel.Email" />
+                <ValidationMessage For="@(() => RegistrationModel.Email)" />
+            </div>
+            <div>
+                <label for="first name" class="text-white">First Name</label>
+                <InputText class="form-control" @bind-Value="RegistrationModel.FirstName" />
+                <ValidationMessage For="@(() => RegistrationModel.FirstName)" />
+            </div>
+            <div>
+                <label for="last name" class="text-white">Last Name</label>
+                <InputText class="form-control" @bind-Value="RegistrationModel.LastName" />
+                <ValidationMessage For="@(() => RegistrationModel.LastName)" />
+            </div>
+            <div>
+                <label for="password" class="text-white">Password</label>
+                <InputText class="form-control" type="password" @bind-Value="RegistrationModel.Password" />
+                <ValidationMessage For="@(() => RegistrationModel.Password)" />
+            </div>
+            <div>
+                <label for="dateOfBirth" class="text-white">Date of Birth</label>
+                <InputDate class="form-control" @bind-Value="RegistrationModel.DateOfBirth" />
+                <ValidationMessage For="@(() => RegistrationModel.DateOfBirth)" />
+            </div>
+            <div>
+                <label for="country" class="text-white">Country</label>
+                <InputText class="form-control" @bind-Value="RegistrationModel.Country" />
+                <ValidationMessage For="@(() => RegistrationModel.Country)" />
+            </div>
+            <div>
+                <label for="console" class="text-white">Console</label>
+                <select class="form-control" @bind="RegistrationModel.Console" >
+                    <option> Choose a console: </option>
+                    <option checked="@(RegistrationModel.Console == Constants.Consoles[0])" value="@Constants.Consoles[0]"> PS5 </option>
+                    <option checked="@(RegistrationModel.Console == Constants.Consoles[1])" value="@Constants.Consoles[1]"> XBox X </option>
+                    <option checked="@(RegistrationModel.Console == Constants.Consoles[2])" value="@Constants.Consoles[2]"> PC </option>
+                </select>
+                <ValidationMessage For="@(() => RegistrationModel.Console)" />
+            </div>
+            <div>
+                <label for="gamingPlatformAccountId" class="text-white">Gaming Platform Account ID</label>
+                <InputText class="form-control" @bind-Value="RegistrationModel.GamingPlatformAccountId" />
+                <ValidationMessage For="@(() => RegistrationModel.GamingPlatformAccountId)" />
+            </div>
+            <div class="mt-4 text-center">
+                <button type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> Register </button>
+            </div>
+        </EditForm>
     </div>
-}
-<div class="card-body col-lg-3">
-    <EditForm Model="RegistrationModel" OnValidSubmit="HandleRegistration">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-        <div>
-            <label for="email" class="text-white">Email Address</label>
-            <InputText class="form-control" @bind-Value="RegistrationModel.Email" />
-            <ValidationMessage For="@(() => RegistrationModel.Email)" />
-        </div>
-        <div>
-            <label for="first name" class="text-white">First Name</label>
-            <InputText class="form-control" @bind-Value="RegistrationModel.FirstName" />
-            <ValidationMessage For="@(() => RegistrationModel.FirstName)" />
-        </div>
-        <div>
-            <label for="last name" class="text-white">Last Name</label>
-            <InputText class="form-control" @bind-Value="RegistrationModel.LastName" />
-            <ValidationMessage For="@(() => RegistrationModel.LastName)" />
-        </div>
-        <div>
-            <label for="password" class="text-white">Password</label>
-            <InputText class="form-control" type="password" @bind-Value="RegistrationModel.Password" />
-            <ValidationMessage For="@(() => RegistrationModel.Password)" />
-        </div>
-        <div>
-            <label for="dateOfBirth" class="text-white">Date of Birth</label>
-            <InputDate class="form-control" @bind-Value="RegistrationModel.DateOfBirth" />
-            <ValidationMessage For="@(() => RegistrationModel.DateOfBirth)" />
-        </div>
-        <div>
-            <label for="country" class="text-white">Country</label>
-            <InputText class="form-control" @bind-Value="RegistrationModel.Country" />
-            <ValidationMessage For="@(() => RegistrationModel.Country)" />
-        </div>
-        <div>
-            <label for="console" class="text-white">Console</label>
-            <select class="form-control" @bind="RegistrationModel.Console" >
-                <option> Choose a console: </option>
-                <option checked="@(RegistrationModel.Console == Constants.Consoles[0])" value="@Constants.Consoles[0]"> PS5 </option>
-                <option checked="@(RegistrationModel.Console == Constants.Consoles[1])" value="@Constants.Consoles[1]"> XBox X </option>
-                <option checked="@(RegistrationModel.Console == Constants.Consoles[2])" value="@Constants.Consoles[2]"> PC </option>
-            </select>
-            <ValidationMessage For="@(() => RegistrationModel.Console)" />
-        </div>
-        <div>
-            <label for="gamingPlatformAccountId" class="text-white">Gaming Platform Account ID</label>
-            <InputText class="form-control" @bind-Value="RegistrationModel.GamingPlatformAccountId" />
-            <ValidationMessage For="@(() => RegistrationModel.GamingPlatformAccountId)" />
-        </div>
-
-        <button type="submit" class="btn btn-success btn-block"> Register </button>
-    </EditForm>
-
+    <div class="col-lg-8 backgroundWallpaperCss"> </div>
 </div>
 
 @code {
@@ -71,7 +68,6 @@
     List<string> consoles = Constants.Consoles;
 
     ApiUserDto RegistrationModel = new ApiUserDto();
-    string message = string.Empty;
 
     private async Task HandleRegistration()
     {
@@ -94,8 +90,6 @@
             {
                 if (apiExc.StatusCode >= 200 && apiExc.StatusCode < 300)
                     NavigateToLogin();
-
-                message = apiExc.Response;
             }
         }
         return;

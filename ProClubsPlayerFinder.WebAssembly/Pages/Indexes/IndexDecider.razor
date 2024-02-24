@@ -1,0 +1,34 @@
+﻿@page "/indexDecider"
+
+<AuthorizeView>
+    <NotAuthorized>
+        <div class="mx-4 pt-2">
+            <h1 class="text-white mb-5"> @welcomePhrase </h1>
+            <h3 class="text-white"> @anonymousUserPhrase </h3>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Free Agent">
+    <Authorized>
+        <FreeAgents />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Club Owner">
+    <Authorized>
+        <ClubOwners />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Player">
+    <Authorized>
+        <Players />
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    string welcomePhrase = "Welcome to the Pro Clubs Player Finder for EA FC 24";
+
+    string anonymousUserPhrase = "Login to your account or Register";
+}

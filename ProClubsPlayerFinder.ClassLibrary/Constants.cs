@@ -20,4 +20,13 @@ namespace ProClubsPlayerFinder.ClassLibrary
 
         public static List<string> Consoles { get; } = new List<string> { "PS5", "XBox", "PC"};
     }
+
+    public class Roles
+    {
+        public static string FreeAgent { get; } = "Free Agent";
+        public static string ClubOwner { get; } = "Club Owner";
+        public static string Player { get; } = "Player";
+
+        public static string RoleDictKey { get; } = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+    }
 }

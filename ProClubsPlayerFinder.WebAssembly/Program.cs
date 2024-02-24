@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using ProClubsPlayerFinder.WebAssembly.Providers;
 using ProClubsPlayerFinder.WebAssembly;
 using ProClubsPlayerFinder.WebAssembly.Services.Authentication;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -15,6 +16,8 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https:/
 
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
+
+builder.Services.AddScoped<JwtSecurityTokenHandler>();
 
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(p => p.GetRequiredService<CustomAuthStateProvider>());

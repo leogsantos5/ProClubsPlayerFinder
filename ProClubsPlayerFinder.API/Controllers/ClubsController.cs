@@ -46,24 +46,13 @@ namespace ProClubsPlayerFinder.API.Controllers
             return Ok(club);
         }
 
-        // POST: Creates a Club
-        // To protect from overposting attacks, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost("CreateClub")]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         [Authorize(Roles = "Free Agent")]
-        public async Task<ActionResult<Club>> CreateClub([Bind("OwnerPlayerId,Description,ClubName,Console")] ClubCreateDto clubToCreate)
+        // POST: Creates a Club
+        [HttpPost("CreateClub")]
+        public async Task<ActionResult<Club>> CreateClub([Bind("Description,ClubName")] ClubCreateDto clubToCreate)
         {
-            // Get the authenticated user
-            var authenticatedPlayer = await _userManager.GetUserAsync(User);
-            if (authenticatedPlayer == null)
-                return Unauthorized("Player not authenticated");
-
-            //if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Club Owner"))
-            //    return Forbid("You already are a Club Owner. You have to delete this club to create another club.");
-            //else if (await _userManager.IsInRoleAsync(authenticatedPlayer, "Player"))
-            //    return Forbid("You already are a Player. You have to leave this club to create your club.");
-
-            var playerOwner = await _userManager.FindByIdAsync(clubToCreate.OwnerPlayerId.ToString());
+            var playerOwner = await _userManager.FindByIdAsync("71a8b6ac-6395-41d8-94d4-e103350110c0"); // so pa testar, id do Leo
             if (playerOwner == null)
                 return NotFound("Could not find a player with that id");
 
@@ -73,10 +62,10 @@ namespace ProClubsPlayerFinder.API.Controllers
             var club = new Club
             {
                 Description = clubToCreate.Description,
-                OwnerPlayerId = clubToCreate.OwnerPlayerId.ToString(),
+                OwnerPlayerId = "71a8b6ac-6395-41d8-94d4-e103350110c0", // so pa testar, id do Leo
                 ClubName = clubToCreate.ClubName,
-                Console = clubToCreate.Console,
-                Players = new List<ApiUser>()
+                Console = playerOwner.Console,
+                Players = new List<ApiUser>() // errado aqui
             };
 
             club.OwnerPlayer = playerOwner;
@@ -84,6 +73,7 @@ namespace ProClubsPlayerFinder.API.Controllers
 
             _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
+            // Exception aqui, Id invalido, deve ser porque tou a tentar guardar players quando nao ha nada de players na tabela Clubs
             return CreatedAtAction(nameof(GetClub), new { id = club.Id }, club);
         }
 

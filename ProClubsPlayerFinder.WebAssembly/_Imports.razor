@@ -10,13 +10,20 @@
 @using ProClubsPlayerFinder.WebAssembly.Layout
 
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
 
 @using ProClubsPlayerFinder.ClassLibrary.DTOs.ClassLibraryUserDTOs
 @using ProClubsPlayerFinder.WebAssembly.Providers
 @using ProClubsPlayerFinder.WebAssembly.Services.Authentication
 @using ProClubsPlayerFinder.ClassLibrary
 @using ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs
+@using ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs
+@using ProClubsPlayerFinder.WebAssembly.Services.Functionality
+@using Blazored.LocalStorage
+@using System.Net.Http.Headers
 
 @inject IJSRuntime js
 @inject NavigationManager navManager
+@inject HttpClient httpClient
+@inject ILocalStorageService localStorageService
 

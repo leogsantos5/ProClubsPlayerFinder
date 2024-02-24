@@ -1,0 +1,59 @@
+﻿@page "/createClub"
+
+@inject CustomAuthStateProvider authStateProvider
+@inject IAuthenticationService authService
+
+<div class="d-flex flex-row">
+    <div class="col-lg-6 d-flex flex-column justify-content-center px-5 pt-4" style="background-color: black">
+        <h1 class="text-white">Create your Club</h1>
+
+        <EditForm Model="CreateClubModel" OnValidSubmit="HandleClubCreation">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mt-4">
+                <label for="clubname" class="text-white">Club Name</label>
+                <InputText class="form-control mt-1" @bind-Value="CreateClubModel.ClubName" />
+                <ValidationMessage For="@(() => CreateClubModel.ClubName)" />
+            </div>
+            <div class="mt-4">
+                <label for="description" class="text-white">Description</label>
+                <InputTextArea class="form-control mt-1" style="height: 30vh;" placeholder=@DescriptionPlaceholder @bind-Value="CreateClubModel.Description" />
+                <ValidationMessage For="@(() => CreateClubModel.Description)" />
+            </div>
+            <div class="mt-4 text-center">
+                <button type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> Create Club </button>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col-lg-6 backgroundWallpaperCss"> </div>
+</div>
+
+@code {
+    List<string> consoles = Constants.Consoles;
+
+    string DescriptionPlaceholder = "Use this to write info about the club. For example: style of play, type of players the club is looking for, the division it´s on, links to youtube videos of gameplay, anything you think is relevant! (Max 255 characters)";
+
+    ClubCreateDto CreateClubModel = new ClubCreateDto();
+
+    private async Task HandleClubCreation()
+    {
+        try
+        {
+            await GetBearerToken();
+            var result = await httpClient.PostAsJsonAsync("api/Clubs/CreateClub", CreateClubModel);
+            if (result.IsSuccessStatusCode)
+                navManager.NavigateTo("/indexDecider");
+        }
+        catch (ApiException)
+        {
+            await js.InvokeVoidAsync("alert", "Exception encountered");
+        }
+    }
+
+    protected async Task GetBearerToken()
+    {
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+    }
+}

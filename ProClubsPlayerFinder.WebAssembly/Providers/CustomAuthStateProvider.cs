@@ -1,27 +1,36 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.JSInterop;
+using ProClubsPlayerFinder.ClassLibrary;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace ProClubsPlayerFinder.WebAssembly.Providers
 {
-    public class CustomAuthStateProvider(ILocalStorageService localStorageService) : AuthenticationStateProvider
+    public class CustomAuthStateProvider(ILocalStorageService localStorageService, JwtSecurityTokenHandler jwtSecurityTokenHandler) : AuthenticationStateProvider
     {
         private readonly ClaimsPrincipal anonymous = new(new ClaimsIdentity());
 
+        //https://youtu.be/P0XqYbUmSDU?si=Wx1IzYj1mdjJ9SVc e Trevoir (curso q fiz)
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
             {
+                var anonymousAuthState = await Task.FromResult(new AuthenticationState(anonymous));
                 var stringToken = await localStorageService.GetItemAsStringAsync("token");
+                var jwtTokenContent = jwtSecurityTokenHandler.ReadJwtToken(stringToken);
+
                 if (string.IsNullOrEmpty(stringToken))
-                    return await Task.FromResult(new AuthenticationState(anonymous));
+                    return anonymousAuthState;
+                else if (DateTime.Now > jwtTokenContent.ValidTo)
+                    return anonymousAuthState;
                 else
                 {
                     var getUserClaims = DecryptToken(stringToken);
-                    if (getUserClaims != null) return await Task.FromResult(new AuthenticationState(anonymous));
+                    if (getUserClaims == null) 
+                        return await Task.FromResult(new AuthenticationState(anonymous));
 
                     var claimsPrincipal = SetClaimPrincipal(getUserClaims);
                     return await Task.FromResult(new AuthenticationState(claimsPrincipal));
@@ -38,6 +47,7 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
                 {
                     new (ClaimTypes.Name, claims.Name!),
                     new Claim(ClaimTypes.Email, claims.Email!),
+                    new Claim(ClaimTypes.Role, claims.Role!),
                 }, "JwtAuth"));
         }
 
@@ -50,7 +60,8 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
 
             var name = token.Claims.FirstOrDefault(claim => claim.Type == "sub");
             var email = token.Claims.FirstOrDefault(claim => claim.Type == "email");
-            return new CustomUserClaims(name!.Value, email!.Value);
+            var role = token.Claims.FirstOrDefault(claim => claim.Type == Roles.RoleDictKey);
+            return new CustomUserClaims(name!.Value, email!.Value, role!.Value);
         }
 
         public async Task UpdateAuthenticationState(string jwtToken)

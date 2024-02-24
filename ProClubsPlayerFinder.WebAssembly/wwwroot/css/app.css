@@ -1,5 +1,10 @@
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../fonts/Montserrat-Regular.ttf') format('truetype');
+}
+
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: Montserrat, Helvetica, Arial, sans-serif;
 }
 
 h1:focus {
@@ -100,4 +105,17 @@ a, .btn-link {
 
 code {
     color: #c02d76;
+}
+
+.green-background {
+    background-color: #70f06c;
+}
+
+.backgroundWallpaperCss {
+    background-image: url('../images/EAFC24Wallpaper2.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 90vh; /* Set to 100% of the viewport height */
+    margin: 0; /* Remove default body margin */
 }
