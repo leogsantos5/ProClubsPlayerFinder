@@ -18,7 +18,6 @@
 @using ProClubsPlayerFinder.ClassLibrary
 @using ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs
 @using ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs
-@using ProClubsPlayerFinder.WebAssembly.Services.Functionality
 @using Blazored.LocalStorage
 @using System.Net.Http.Headers
 
@@ -26,4 +25,7 @@
 @inject NavigationManager navManager
 @inject HttpClient httpClient
 @inject ILocalStorageService localStorageService
+
+@inject CustomAuthStateProvider authStateProvider
+@inject IAuthenticationService authService
 

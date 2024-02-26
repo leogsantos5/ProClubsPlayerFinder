@@ -33,7 +33,7 @@ public partial class ClubsPlayerFinderEafc24Context : IdentityDbContext<ApiUser>
         {
             entity.HasKey(e => e.Id).HasName("PK__Clubs__D35058E7947E6D35");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            //entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.ClubName).HasMaxLength(50);
             entity.Property(e => e.Console).HasMaxLength(20);
             entity.Property(e => e.Description).HasMaxLength(512);

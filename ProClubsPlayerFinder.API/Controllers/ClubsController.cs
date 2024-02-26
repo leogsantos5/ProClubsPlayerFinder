@@ -18,27 +18,27 @@ namespace ProClubsPlayerFinder.API.Controllers
     [Authorize]
     public class ClubsController : ControllerBase
     {
-        private readonly ClubsPlayerFinderEafc24Context _context;
-        private readonly UserManager<ApiUser> _userManager;
+        private readonly ClubsPlayerFinderEafc24Context context;
+        private readonly UserManager<ApiUser> userManager;
 
-        public ClubsController(UserManager<ApiUser> userManager, ClubsPlayerFinderEafc24Context context)
+        public ClubsController(UserManager<ApiUser> _userManager, ClubsPlayerFinderEafc24Context _context)
         {
-            _context = context;
-            _userManager = userManager;
+            context = _context;
+            userManager = _userManager;
         }
 
         // GET: All Clubs
         [HttpGet("GetClubs")]
         public async Task<ActionResult<IEnumerable<Club>>> GetClubs()
         {
-            return Ok(await _context.Clubs.ToListAsync());
+            return Ok(await context.Clubs.ToListAsync());
         }
 
         // GET: Gets specific Club
         [HttpGet("GetClub/{id}")]
         public async Task<ActionResult<Club>> GetClub(int? id)
         {
-            var club = await _context.Clubs.Include(club => club.Players).FirstOrDefaultAsync(c => c.Id == id);
+            var club = await context.Clubs.Include(club => club.Players).FirstOrDefaultAsync(c => c.Id == id);
 
             if (club == null)
                 return NotFound(); // Return a 404 Not Found if the club is not found
@@ -52,29 +52,25 @@ namespace ProClubsPlayerFinder.API.Controllers
         [HttpPost("CreateClub")]
         public async Task<ActionResult<Club>> CreateClub([Bind("Description,ClubName")] ClubCreateDto clubToCreate)
         {
-            var playerOwner = await _userManager.FindByIdAsync("71a8b6ac-6395-41d8-94d4-e103350110c0"); // so pa testar, id do Leo
-            if (playerOwner == null)
-                return NotFound("Could not find a player with that id");
-
-            await _userManager.RemoveFromRoleAsync(playerOwner, "Free Agent");
-            await _userManager.AddToRoleAsync(playerOwner, "Club Owner");
-
+            string authenticatedUserId = User.Claims.FirstOrDefault(claim => claim.Type == "uid")!.Value;
+            ApiUser playerOwner = userManager.FindByIdAsync(authenticatedUserId).Result!;
+            // Create the club
             var club = new Club
             {
-                Description = clubToCreate.Description,
-                OwnerPlayerId = "71a8b6ac-6395-41d8-94d4-e103350110c0", // so pa testar, id do Leo
                 ClubName = clubToCreate.ClubName,
+                Description = clubToCreate.Description,
+                OwnerPlayerId = playerOwner.Id,
                 Console = playerOwner.Console,
-                Players = new List<ApiUser>() // errado aqui
+                Players = new List<ApiUser>() // Initialize with an empty list of players
             };
 
             club.OwnerPlayer = playerOwner;
-            club.Players.Add(playerOwner);
+            await userManager.RemoveFromRoleAsync(playerOwner, "Free Agent");
+            await userManager.AddToRoleAsync(playerOwner, "Club Owner");
+            context.Clubs.Add(club);
+            await context.SaveChangesAsync();
 
-            _context.Clubs.Add(club);
-            await _context.SaveChangesAsync();
-            // Exception aqui, Id invalido, deve ser porque tou a tentar guardar players quando nao ha nada de players na tabela Clubs
-            return CreatedAtAction(nameof(GetClub), new { id = club.Id }, club);
+            return Ok(club);           
         }
 
         // PUT: Changes Club info
@@ -85,7 +81,7 @@ namespace ProClubsPlayerFinder.API.Controllers
             if (id != clubInfoToUpdate.Id)
                 return NotFound();
 
-            var club = await _context.Clubs.FirstOrDefaultAsync(c => c.Id == id);
+            var club = await context.Clubs.FirstOrDefaultAsync(c => c.Id == id);
 
             if (club == null)
                 return NotFound(); // Return a 404 Not Found if the club is not found
@@ -101,20 +97,20 @@ namespace ProClubsPlayerFinder.API.Controllers
         [Authorize(Roles = "Club Owner")]
         public async Task<IActionResult> DeleteClub(int id)
         {
-            var club = await _context.Clubs.FindAsync(id);
+            var club = await context.Clubs.FindAsync(id);
             if (club != null)
             {
-                _context.Clubs.Remove(club);
-                await _context.SaveChangesAsync();
+                context.Clubs.Remove(club);
+                await context.SaveChangesAsync();
             }
-            return NoContent();          
+            return NoContent();
         }
 
         // GET: Gets players of a Club
         [HttpGet("GetClubPlayers/{id}")]
         public async Task<IActionResult> GetClubPlayers(int? id)
         {
-            var clubPlayers = await _context.Clubs.Where(club => club.Id == id).SelectMany(club => club.Players).ToListAsync();
+            var clubPlayers = await context.Clubs.Where(club => club.Id == id).SelectMany(club => club.Players).ToListAsync();
 
             if (clubPlayers == null || clubPlayers.Count == 0) // it is never not null, it always has at least one, the owner
                 return NotFound();
@@ -124,7 +120,7 @@ namespace ProClubsPlayerFinder.API.Controllers
 
         private bool ClubExists(int id)
         {
-            return _context.Clubs.Any(e => e.Id == id);
+            return context.Clubs.Any(e => e.Id == id);
         }
     }
 }

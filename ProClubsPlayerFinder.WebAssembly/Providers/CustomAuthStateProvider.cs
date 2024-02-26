@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.JSInterop;
 using ProClubsPlayerFinder.ClassLibrary;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Security.Claims;
 
 namespace ProClubsPlayerFinder.WebAssembly.Providers
@@ -79,6 +81,26 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
                 await localStorageService.RemoveItemAsync("token");
             }
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
+        }
+
+        public async Task UpdateNewAuthStateWithChangedRole(string jwtToken, string newRole)
+        {
+            CustomUserClaims newUserClaims = new CustomUserClaims(); // a otimizar talvez, mas funciona top!
+            if (!string.IsNullOrEmpty(jwtToken))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var token = handler.ReadJwtToken(jwtToken);
+
+                var name = token.Claims.FirstOrDefault(claim => claim.Type == "sub");
+                var email = token.Claims.FirstOrDefault(claim => claim.Type == "email");
+                if (!string.IsNullOrEmpty(newRole))
+                    newUserClaims = new CustomUserClaims(name!.Value, email!.Value, newRole);
+
+                var newClaimsPrincipal = new ClaimsPrincipal();
+                newClaimsPrincipal = SetClaimPrincipal(newUserClaims);
+                await localStorageService.SetItemAsStringAsync("token", jwtToken);
+                NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(newClaimsPrincipal)));
+            }
         }
 
         //public async Task LoggedIn()

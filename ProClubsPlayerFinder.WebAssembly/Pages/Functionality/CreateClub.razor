@@ -1,8 +1,5 @@
 ﻿@page "/createClub"
 
-@inject CustomAuthStateProvider authStateProvider
-@inject IAuthenticationService authService
-
 <div class="d-flex flex-row">
     <div class="col-lg-6 d-flex flex-column justify-content-center px-5 pt-4" style="background-color: black">
         <h1 class="text-white">Create your Club</h1>
@@ -39,10 +36,13 @@
     {
         try
         {
-            await GetBearerToken();
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null) 
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
             var result = await httpClient.PostAsJsonAsync("api/Clubs/CreateClub", CreateClubModel);
-            if (result.IsSuccessStatusCode)
-                navManager.NavigateTo("/indexDecider");
+            await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Club Owner");
+            navManager.NavigateTo("/");
+            
         }
         catch (ApiException)
         {
@@ -50,10 +50,4 @@
         }
     }
 
-    protected async Task GetBearerToken()
-    {
-        var stringToken = await localStorageService.GetItemAsStringAsync("token");
-        if (stringToken != null)
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
-    }
 }
