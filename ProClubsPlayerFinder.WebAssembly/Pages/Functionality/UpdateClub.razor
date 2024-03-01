@@ -1,0 +1,73 @@
+﻿@page "/updateClub/{ClubId:int}"
+@attribute [Authorize(Roles = "Club Owner")]
+
+<div class="d-flex flex-row">
+    <div class="col-lg-6 d-flex flex-column justify-content-center px-5 pt-4" style="background-color: black">
+        <h1 class="text-white">Edit Club Info</h1>
+
+        <EditForm Model="UpdateClubModel" OnValidSubmit="HandleClubUpdate">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mt-4">
+                <label for="clubname" class="text-white">Club Name</label>
+                <InputText class="form-control mt-1" @bind-Value="UpdateClubModel.ClubName" />
+                <ValidationMessage For="@(() => UpdateClubModel.ClubName)" />
+            </div>
+            <div>
+                <label for="console" class="text-white">Console</label>
+                <select class="form-control" @bind="UpdateClubModel.Console">
+                    <option> Choose a console: </option>
+                    <option checked="@(UpdateClubModel.Console == Constants.Consoles[0])" value="@Constants.Consoles[0]"> PS5 </option>
+                    <option checked="@(UpdateClubModel.Console == Constants.Consoles[1])" value="@Constants.Consoles[1]"> XBox X </option>
+                    <option checked="@(UpdateClubModel.Console == Constants.Consoles[2])" value="@Constants.Consoles[2]"> PC </option>
+                </select>
+                <ValidationMessage For="@(() => UpdateClubModel.Console)" />
+            </div>
+            <div class="mt-4">
+                <label for="description" class="text-white">Description</label>
+                <InputTextArea class="form-control mt-1" style="height: 30vh;" @bind-Value="UpdateClubModel.Description" />
+                <ValidationMessage For="@(() => UpdateClubModel.Description)" />
+            </div>
+            <div class="mt-4 text-center">
+                <button type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> Update Club </button>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col-lg-6 backgroundWallpaperCss"> </div>
+</div>
+
+@code {
+    [Parameter]
+    public int ClubId { get; set; }
+
+    string DescriptionPlaceholder = "Use this to write info about the club. For example: style of play, type of players the club is looking for, the division it´s on, links to youtube videos of gameplay, anything you think is relevant! (Max 255 characters)";
+
+    ClubUpdateDto UpdateClubModel = new ClubUpdateDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateClubModel = await httpClient.GetFromJsonAsync<ClubUpdateDto>($"api/Clubs/GetClub/{ClubId}");
+    }
+
+    private async Task HandleClubUpdate()
+    {
+        try
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            await httpClient.PutAsJsonAsync($"api/Clubs/UpdateClub/{ClubId}", UpdateClubModel);
+
+            // https://www.nuget.org/packages/SweetAlert.Blazor#readme-body-tab
+            await sweetAlertService.ShowAlert(new AlertArgs { Title = "Club Updated!", Text = "Club info was successfully updated", 
+                Icon = Icon.Success, DangerMode = false, Button = new { Text = "Close" }});
+
+            navManager.NavigateTo("/");
+            
+        }
+        catch (ApiException)
+        {
+            await js.InvokeVoidAsync("alert", "Exception encountered");
+        }
+    }
+}

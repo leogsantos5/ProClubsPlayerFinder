@@ -13,13 +13,13 @@ namespace ProClubsPlayerFinder.WebAssembly.Services.Authentication
         //private readonly IClient iClient;
         private readonly HttpClient httpClient;
         private readonly ILocalStorageService localStorage;
-        private readonly AuthenticationStateProvider authenticationStateProvider;
+        private readonly CustomAuthStateProvider customAuthStateProvider;
 
-        public AuthenticationService(HttpClient httpClient, ILocalStorageService localStorage, AuthenticationStateProvider authenticationStateProvider)
+        public AuthenticationService(HttpClient httpClient, ILocalStorageService localStorage, CustomAuthStateProvider customAuthStateProvider)
         {
             this.httpClient = httpClient;
             this.localStorage = localStorage;
-            this.authenticationStateProvider = authenticationStateProvider;
+            this.customAuthStateProvider = customAuthStateProvider;
         }
         public async Task<HttpResponseMessage> RegisterAsync(ApiUserDto apiUserDto)
         {
@@ -35,6 +35,11 @@ namespace ProClubsPlayerFinder.WebAssembly.Services.Authentication
 
             // Deserialize the response content to AuthResponse
             return await response.Content.ReadFromJsonAsync<AuthResponse>();
+        }
+
+        public async Task LogoutAsync()
+        {
+            await customAuthStateProvider.LogOut();
         }
 
     }

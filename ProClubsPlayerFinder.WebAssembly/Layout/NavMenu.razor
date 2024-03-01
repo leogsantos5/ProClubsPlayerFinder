@@ -7,6 +7,7 @@
         <AuthorizeView>
             <Authorized>
                 <label class="btn btn-lg" href=""> Hello @context.User?.Identity?.Name! </label>
+                <NavLink style="margin-right:8px;" class="btn btn-lg btn-outline-dark" @onclick="HandleLogout"> LOGOUT </NavLink>
             </Authorized>
             <NotAuthorized>
                 <NavLink style="margin-right:8px;" class="btn btn-lg btn-outline-dark" href="users/login"> LOGIN </NavLink>
@@ -24,5 +25,11 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task HandleLogout()
+    {
+        await authStateProvider.LogOut();
+        navManager.NavigateTo("/");
     }
 }

@@ -2,7 +2,7 @@
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" > Search for Free Agents </NavLink>
 </div>
 <div class="mt-4 text-center">
-    <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> Edit Club </NavLink>
+    <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" @onclick="NavigateToUpdateClub"> Edit Club Info </NavLink>
 </div>
 <div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> Club Group Chat </NavLink>
@@ -14,9 +14,47 @@
     <NavLink type="submit" class="btn btn-lg btn-warning btn-block text-black"> Remove Players </NavLink>
 </div>
 <div class="mt-4 text-center">
-    <NavLink type="submit" class="btn btn-lg btn-danger btn-block text-black"> Delete Club </NavLink>
+    <NavLink type="submit" class="btn btn-lg btn-danger btn-block text-black" @onclick="HandleDeleteClub"> Delete Club </NavLink>
 </div>
 
 @code {
+    private async Task HandleDeleteClub()
+    {
+        try
+        {
+            var deleteConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Delete club?",
+                text: "Are you sure to delete your club? All players will be Free Agents.", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+            if (deleteConfirm)
+            {
+                var stringToken = await localStorageService.GetItemAsStringAsync("token");
+                if (stringToken != null)
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                var authenticatedUserId = authStateProvider.GetUserIdFromToken(stringToken!);
+                var result = await httpClient.DeleteAsync("api/Clubs/DeleteClub/" + authenticatedUserId);
+                if (result.IsSuccessStatusCode){
+                    await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Free Agent");
+                    navManager.NavigateTo("/");
+                }
+            }
+        }
+        catch (ApiException) 
+        {
+            await js.InvokeVoidAsync("alert", "Something went wrong, try again later");
+        }
+    }
 
+    private async Task NavigateToUpdateClub()
+    {
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+        var authenticatedUserId = authStateProvider.GetUserIdFromToken(stringToken!);
+        var httpResponse = await httpClient.GetAsync($"api/Clubs/GetClubId/{authenticatedUserId}");
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            var clubIdFromClubOwnerId = await httpResponse.Content.ReadFromJsonAsync<int>();
+            navManager.NavigateTo("/updateClub/" + clubIdFromClubOwnerId);
+        }
+    }
 }

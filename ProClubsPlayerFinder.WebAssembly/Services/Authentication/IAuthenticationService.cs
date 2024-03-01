@@ -7,6 +7,8 @@ namespace ProClubsPlayerFinder.WebAssembly.Services.Authentication
     {
         Task<AuthResponse> LoginAsync(LoginUserDto loginUserDto);
 
+        Task LogoutAsync();
+
         Task<HttpResponseMessage> RegisterAsync(ApiUserDto apiUserDto);
     }
 }

@@ -20,12 +20,15 @@
 @using ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs
 @using Blazored.LocalStorage
 @using System.Net.Http.Headers
+@using SweetAlert.Blazor
 
 @inject IJSRuntime js
 @inject NavigationManager navManager
 @inject HttpClient httpClient
 @inject ILocalStorageService localStorageService
-
 @inject CustomAuthStateProvider authStateProvider
 @inject IAuthenticationService authService
+@inject SweetAlert.Blazor.SweetAlertService sweetAlertService
+
+
 

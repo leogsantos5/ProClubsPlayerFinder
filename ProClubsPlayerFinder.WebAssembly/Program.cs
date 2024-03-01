@@ -18,9 +18,10 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
 
 builder.Services.AddScoped<JwtSecurityTokenHandler>();
-
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(p => p.GetRequiredService<CustomAuthStateProvider>());
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+builder.Services.AddSweetAlertService();
 
 await builder.Build().RunAsync();

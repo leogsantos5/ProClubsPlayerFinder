@@ -38,12 +38,46 @@ namespace ProClubsPlayerFinder.API.Controllers
         [HttpGet("GetClub/{id}")]
         public async Task<ActionResult<Club>> GetClub(int? id)
         {
-            var club = await context.Clubs.Include(club => club.Players).FirstOrDefaultAsync(c => c.Id == id);
+            var club = await context.Clubs.FirstOrDefaultAsync(c => c.Id == id);
 
             if (club == null)
                 return NotFound(); // Return a 404 Not Found if the club is not found
 
-            return Ok(club);
+            ClubUpdateDto clubUpdateDto = new ClubUpdateDto();
+            clubUpdateDto.ClubId = club.Id!;
+            clubUpdateDto.ClubName = club.ClubName!;
+            clubUpdateDto.Description = club.Description!;
+            clubUpdateDto.Console = club.Console!;
+
+            return Ok(clubUpdateDto);
+        }
+
+        [Authorize(Roles = "Club Owner")]
+        [HttpPut("UpdateClub/{id}")]
+        public async Task<ActionResult<IActionResult>> UpdateClub(int id, ClubUpdateDto clubUpdateDto)
+        {
+            var club = await context.Clubs.FindAsync(id);
+
+            if (club == null)
+                return NotFound(); // Or handle the case where the club with the given id is not found
+
+            club.ClubName = clubUpdateDto.ClubName;
+            club.Description = clubUpdateDto.Description;
+            club.Console = clubUpdateDto.Console;
+
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // GET: Gets specific Club
+        [HttpGet("GetClubId/{playerOwnerId}")]
+        [Authorize(Roles = "Club Owner")]
+        public async Task<ActionResult<int>> GetClubIdFromPlayerOwnerId(string playerOwnerId)
+        {
+            var playerOwner = await context.Players.FindAsync(playerOwnerId);
+            int clubId = context.Clubs.FindAsync(playerOwner!.ClubId).Result!.Id;
+
+            return Ok(clubId);
         }
 
         //[ValidateAntiForgeryToken]
@@ -70,6 +104,11 @@ namespace ProClubsPlayerFinder.API.Controllers
             context.Clubs.Add(club);
             await context.SaveChangesAsync();
 
+            var newClub = await context.Clubs.FirstOrDefaultAsync(club => club.OwnerPlayerId == playerOwner.Id);
+            var newClubId = newClub!.Id;
+            playerOwner.ClubId = newClubId;
+            await context.SaveChangesAsync();
+
             return Ok(club);           
         }
 
@@ -93,16 +132,27 @@ namespace ProClubsPlayerFinder.API.Controllers
         }
 
         // DELETE: Deletes a Club
-        [HttpDelete("DeleteClub/{id}")]
+        [HttpDelete("DeleteClub/{playerOwnerId}")]
         [Authorize(Roles = "Club Owner")]
-        public async Task<IActionResult> DeleteClub(int id)
+        public async Task<IActionResult> DeleteClub(string playerOwnerId)
         {
-            var club = await context.Clubs.FindAsync(id);
-            if (club != null)
+            var playerOwner = await context.Players.FindAsync(playerOwnerId);
+            List<ApiUser> playersInClub = await context.Players.Where(p => p.ClubId == playerOwner!.ClubId).ToListAsync();
+
+            var club = await context.Clubs.FindAsync(playerOwner!.ClubId);
+            context.Clubs.Remove(club!);
+
+            foreach (var player in playersInClub)
             {
-                context.Clubs.Remove(club);
-                await context.SaveChangesAsync();
+                player.ClubId = null;
+                if (playerOwnerId == player.Id)
+                    await userManager.RemoveFromRoleAsync(player, "Club Owner");
+                else
+                    await userManager.RemoveFromRoleAsync(player, "Player");
+                await userManager.AddToRoleAsync(player, "Free Agent");
             }
+ 
+            await context.SaveChangesAsync();
             return NoContent();
         }
 
