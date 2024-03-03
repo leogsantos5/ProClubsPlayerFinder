@@ -26,6 +26,9 @@ namespace ProClubsPlayerFinder.ClassLibrary
 
         public static string ClubDescriptionPlaceholder = "Use this to write info about the club. For example: style of play, type of players the club is looking for, the division it´s on, links to youtube videos of gameplay, anything you think is relevant! (Max 255 characters)";
 
+        public static string TokenExpiredError = "Session Expired!";
+
+        public static string TokenIsValidMessage = "Token is Valid.";
     }
 
     public class Roles

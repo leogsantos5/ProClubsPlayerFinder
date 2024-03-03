@@ -40,8 +40,6 @@
     [Parameter]
     public int ClubId { get; set; }
 
-    string DescriptionPlaceholder = "Use this to write info about the club. For example: style of play, type of players the club is looking for, the division it´s on, links to youtube videos of gameplay, anything you think is relevant! (Max 255 characters)";
-
     ClubUpdateDto UpdateClubModel = new ClubUpdateDto();
 
     protected override async Task OnInitializedAsync()
@@ -55,20 +53,27 @@
         {
             var stringToken = await localStorageService.GetItemAsStringAsync("token");
             if (stringToken != null)
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
-            var result = await httpClient.PutAsJsonAsync($"api/Clubs/UpdateClub/{ClubId}", UpdateClubModel);
-            if (result.IsSuccessStatusCode)
             {
-                // https://www.nuget.org/packages/SweetAlert.Blazor#readme-body-tab
-                await sweetAlertService.ShowAlert(new AlertArgs
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.PutAsJsonAsync($"api/Clubs/UpdateClub/{ClubId}", UpdateClubModel);
+                    if (httpResponse.IsSuccessStatusCode)
                     {
-                        Title = "Club Updated!",
-                        Text = "Club info was successfully updated",
-                        Icon = Icon.Success,
-                        DangerMode = false,
-                        Button = new { Text = "Close" }
-                    });
-                navManager.NavigateTo("/");
+                        // https://www.nuget.org/packages/SweetAlert.Blazor#readme-body-tab
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Club Updated!",
+                                Text = "Club info was successfully updated",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        navManager.NavigateTo("/");
+                    }
+                }
             }
 
         }

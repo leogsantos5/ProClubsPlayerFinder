@@ -9,10 +9,11 @@ using System.Net.Http.Headers;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Data;
+using SweetAlert.Blazor;
 
 namespace ProClubsPlayerFinder.WebAssembly.Providers
 {
-    public class CustomAuthStateProvider(ILocalStorageService localStorageService, JwtSecurityTokenHandler jwtSecurityTokenHandler) : AuthenticationStateProvider
+    public class CustomAuthStateProvider(ILocalStorageService localStorageService, JwtSecurityTokenHandler jwtSecurityTokenHandler, SweetAlertService sweetAlertService, NavigationManager navManager) : AuthenticationStateProvider
     {
         private readonly ClaimsPrincipal anonymous = new(new ClaimsIdentity());
 
@@ -103,12 +104,32 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
             return new CustomUserClaims(name!.Value, email!.Value, role);
         }
 
-        public string GetUserIdFromToken(string jwtToken)
+        public async Task<string> GetUserIdFromToken()
         {
-            var handler = new JwtSecurityTokenHandler();
-            var tokenContent = handler.ReadJwtToken(jwtToken);
-            var userId = tokenContent.Claims.FirstOrDefault(claim => claim.Type == "uid")!.Value;
-            return userId;
+            var jwtToken = await localStorageService.GetItemAsStringAsync("token");
+            var jwtTokenContent = jwtSecurityTokenHandler.ReadJwtToken(jwtToken);
+            return jwtTokenContent.Claims.FirstOrDefault(claim => claim.Type == "uid")!.Value;
         }   
+
+        public async Task<string> CheckTokenExpiration(string jwtToken)
+        {
+            DateTime tokenValidTo = jwtSecurityTokenHandler.ReadJwtToken(jwtToken).ValidTo;
+            if (DateTime.Now > tokenValidTo)
+            {
+                await UpdateAuthenticationState("");
+                await sweetAlertService.ShowAlert(new AlertArgs
+                {
+                    Title = Constants.TokenExpiredError,
+                    Text = "Your authentication token has expired. Please log in again to continue.",
+                    Icon = Icon.Info,
+                    DangerMode = false,
+                    Button = new { Text = "Go to Login" }
+                });
+                navManager.NavigateTo("/users/login");
+                return Constants.TokenExpiredError;
+            }
+            else
+                return Constants.TokenIsValidMessage;
+        }
     }
 }

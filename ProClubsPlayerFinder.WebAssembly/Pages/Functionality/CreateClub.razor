@@ -34,21 +34,28 @@
         try
         {
             var stringToken = await localStorageService.GetItemAsStringAsync("token");
-            if (stringToken != null) 
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
-            var result = await httpClient.PostAsJsonAsync("api/Clubs/CreateClub", CreateClubModel);
-            if (result.IsSuccessStatusCode)
+            if (stringToken != null)
             {
-                await sweetAlertService.ShowAlert(new AlertArgs
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.PostAsJsonAsync("api/Clubs/CreateClub", CreateClubModel);
+                    if (httpResponse.IsSuccessStatusCode)
                     {
-                        Title = "Club Created!",
-                        Text = "Your new club was successfully created",
-                        Icon = Icon.Success,
-                        DangerMode = false,
-                        Button = new { Text = "Close" }
-                    });
-                await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Club Owner");
-                navManager.NavigateTo("/");
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Club Created!",
+                                Text = "Your new club was successfully created",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Club Owner");
+                        navManager.NavigateTo("/");
+                    }
+                }
             }
         }
         catch (ApiException)

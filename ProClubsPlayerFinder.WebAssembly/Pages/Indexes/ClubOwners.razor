@@ -1,13 +1,11 @@
 ﻿<style>
     .btn-warning:hover {
         background-color: #ff9800; /* Change the background color on hover */
-        color: #fff; /* Change the text color on hover */
         border-color: #e65100; /* Change the border color on hover */
     }
 
     .btn-danger:hover {
         background-color: #d32f2f; /* Change the background color on hover */
-        color: #fff; /* Change the text color on hover */
         border-color: #b71c1c; /* Change the border color on hover */
     }
 </style>
@@ -32,6 +30,13 @@
 </div>
 
 @code {
+    private string AuthenticatedUserId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
+    }
+
     private async Task HandleDeleteClub()
     {
         try
@@ -43,13 +48,19 @@
             {
                 var stringToken = await localStorageService.GetItemAsStringAsync("token");
                 if (stringToken != null)
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
-                var authenticatedUserId = authStateProvider.GetUserIdFromToken(stringToken!);
-                var result = await httpClient.DeleteAsync("api/Clubs/DeleteClub/" + authenticatedUserId);
-                if (result.IsSuccessStatusCode)
                 {
-                    await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Free Agent");
-                    navManager.NavigateTo("/");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+
+                    string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                    if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                    {
+                        var httpResponse = await httpClient.DeleteAsync("api/Clubs/DeleteClub/" + AuthenticatedUserId);
+                        if (httpResponse.IsSuccessStatusCode)
+                        {
+                            await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Free Agent");
+                            navManager.NavigateTo("/");
+                        }
+                    }
                 }
             }
         }
@@ -63,13 +74,19 @@
     {
         var stringToken = await localStorageService.GetItemAsStringAsync("token");
         if (stringToken != null)
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
-        var authenticatedUserId = authStateProvider.GetUserIdFromToken(stringToken!);
-        var httpResponse = await httpClient.GetAsync($"api/Clubs/GetClubId/{authenticatedUserId}");
-        if (httpResponse.IsSuccessStatusCode)
         {
-            var clubIdFromClubOwnerId = await httpResponse.Content.ReadFromJsonAsync<int>();
-            navManager.NavigateTo("/updateClub/" + clubIdFromClubOwnerId);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+            {
+                var httpResponse = await httpClient.GetAsync($"api/Clubs/GetClubId/{AuthenticatedUserId}");
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var clubIdFromClubOwnerId = await httpResponse.Content.ReadFromJsonAsync<int>();
+                    navManager.NavigateTo("/updateClub/" + clubIdFromClubOwnerId);
+                }
+            }
         }
     }
 }
