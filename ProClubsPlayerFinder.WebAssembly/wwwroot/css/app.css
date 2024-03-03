@@ -119,3 +119,15 @@ code {
     height: 90vh; /* Set to 100% of the viewport height */
     margin: 0; /* Remove default body margin */
 }
+
+.btn-warning-custom:hover {
+    background-color: #ff9800; /* Change the background color on hover */
+    color: #fff; /* Change the text color on hover */
+    border-color: #e65100; /* Change the border color on hover */
+}
+
+.btn-danger-custom:hover {
+    background-color: #d32f2f; /* Change the background color on hover */
+    color: #fff; /* Change the text color on hover */
+    border-color: #b71c1c; /* Change the border color on hover */
+}

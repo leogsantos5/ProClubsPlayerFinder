@@ -13,16 +13,15 @@ namespace ProClubsPlayerFinder.ClassLibrary
     {
         public int StatusCode { get; private set; }
 
-        public string Response { get; private set; }
+        public string ErrorMessage { get; private set; }
 
-        public System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> Headers { get; private set; }
+        public IDictionary<string, object> AdditionalData { get; }
 
-        public ApiException(string message, int statusCode, string response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Exception innerException)
-            : base(message + "\n\nStatus: " + statusCode + "\nResponse: \n" + ((response == null) ? "(null)" : response.Substring(0, response.Length >= 512 ? 512 : response.Length)), innerException)
+        public ApiException(int statusCode, string errorMessage, IDictionary<string, object>? additionalData = null) : base(errorMessage)
         {
             StatusCode = statusCode;
-            Response = response;
-            Headers = headers;
+            ErrorMessage = errorMessage;
+            AdditionalData = additionalData;
         }
     }
 }

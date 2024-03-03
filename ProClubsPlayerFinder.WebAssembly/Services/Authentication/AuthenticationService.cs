@@ -28,13 +28,10 @@ namespace ProClubsPlayerFinder.WebAssembly.Services.Authentication
 
         public async Task<AuthResponse> LoginAsync(LoginUserDto loginUserDto)
         {
-            var response = await httpClient.PostAsJsonAsync("api/Auth/Login", loginUserDto);
-
-            // Ensure the request was successful before attempting to read the response
+            var response = await httpClient.PostAsJsonAsync("api/Auth/Login", loginUserDto);     
             response.EnsureSuccessStatusCode();
 
-            // Deserialize the response content to AuthResponse
-            return await response.Content.ReadFromJsonAsync<AuthResponse>();
+            return await response.Content.ReadFromJsonAsync<AuthResponse>();         
         }
 
         public async Task LogoutAsync()

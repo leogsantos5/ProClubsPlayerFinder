@@ -19,6 +19,13 @@ namespace ProClubsPlayerFinder.ClassLibrary
         };
 
         public static List<string> Consoles { get; } = new List<string> { "PS5", "XBox", "PC"};
+
+        public static string welcomePhrase = "Welcome to the Pro Clubs Player Finder for EA FC 24";
+
+        public static string anonymousUserPhrase = "Login to your account or Register";
+
+        public static string ClubDescriptionPlaceholder = "Use this to write info about the club. For example: style of play, type of players the club is looking for, the division it´s on, links to youtube videos of gameplay, anything you think is relevant! (Max 255 characters)";
+
     }
 
     public class Roles

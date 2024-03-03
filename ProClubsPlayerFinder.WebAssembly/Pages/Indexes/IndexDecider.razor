@@ -3,8 +3,8 @@
 <AuthorizeView>
     <NotAuthorized>
         <div class="mx-4 pt-2">
-            <h1 class="text-white mb-5"> @welcomePhrase </h1>
-            <h3 class="text-white"> @anonymousUserPhrase </h3>
+            <h1 class="text-white mb-5"> @Constants.welcomePhrase </h1>
+            <h3 class="text-white"> @Constants.anonymousUserPhrase </h3>
         </div>
     </NotAuthorized>
 </AuthorizeView>
@@ -28,7 +28,5 @@
 </AuthorizeView>
 
 @code {
-    string welcomePhrase = "Welcome to the Pro Clubs Player Finder for EA FC 24";
 
-    string anonymousUserPhrase = "Login to your account or Register";
 }

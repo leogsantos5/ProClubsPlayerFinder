@@ -24,7 +24,6 @@ namespace ProClubsPlayerFinder.API.Controllers
 
         public AuthController(UserManager<ApiUser> _userManager, IConfiguration _configuration)
         {
-            //context = _context;
             userManager = _userManager;
             configuration = _configuration;
         }

@@ -1,4 +1,18 @@
-﻿<div class="mt-4 text-center">
+﻿<style>
+    .btn-warning:hover {
+        background-color: #ff9800; /* Change the background color on hover */
+        color: #fff; /* Change the text color on hover */
+        border-color: #e65100; /* Change the border color on hover */
+    }
+
+    .btn-danger:hover {
+        background-color: #d32f2f; /* Change the background color on hover */
+        color: #fff; /* Change the text color on hover */
+        border-color: #b71c1c; /* Change the border color on hover */
+    }
+</style>
+
+<div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" > Search for Free Agents </NavLink>
 </div>
 <div class="mt-4 text-center">
@@ -32,7 +46,8 @@
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
                 var authenticatedUserId = authStateProvider.GetUserIdFromToken(stringToken!);
                 var result = await httpClient.DeleteAsync("api/Clubs/DeleteClub/" + authenticatedUserId);
-                if (result.IsSuccessStatusCode){
+                if (result.IsSuccessStatusCode)
+                {
                     await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Free Agent");
                     navManager.NavigateTo("/");
                 }

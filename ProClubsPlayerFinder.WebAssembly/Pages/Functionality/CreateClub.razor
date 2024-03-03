@@ -15,7 +15,7 @@
             </div>
             <div class="mt-4">
                 <label for="description" class="text-white">Description</label>
-                <InputTextArea class="form-control mt-1" style="height: 30vh;" placeholder=@DescriptionPlaceholder @bind-Value="CreateClubModel.Description" />
+                <InputTextArea class="form-control mt-1" style="height: 30vh;" placeholder=@Constants.ClubDescriptionPlaceholder @bind-Value="CreateClubModel.Description" />
                 <ValidationMessage For="@(() => CreateClubModel.Description)" />
             </div>
             <div class="mt-4 text-center">
@@ -27,10 +27,6 @@
 </div>
 
 @code {
-    List<string> consoles = Constants.Consoles;
-
-    string DescriptionPlaceholder = "Use this to write info about the club. For example: style of play, type of players the club is looking for, the division it´s on, links to youtube videos of gameplay, anything you think is relevant! (Max 255 characters)";
-
     ClubCreateDto CreateClubModel = new ClubCreateDto();
 
     private async Task HandleClubCreation()
@@ -41,9 +37,19 @@
             if (stringToken != null) 
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
             var result = await httpClient.PostAsJsonAsync("api/Clubs/CreateClub", CreateClubModel);
-            await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Club Owner");
-            navManager.NavigateTo("/");
-            
+            if (result.IsSuccessStatusCode)
+            {
+                await sweetAlertService.ShowAlert(new AlertArgs
+                    {
+                        Title = "Club Created!",
+                        Text = "Your new club was successfully created",
+                        Icon = Icon.Success,
+                        DangerMode = false,
+                        Button = new { Text = "Close" }
+                    });
+                await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Club Owner");
+                navManager.NavigateTo("/");
+            }
         }
         catch (ApiException)
         {

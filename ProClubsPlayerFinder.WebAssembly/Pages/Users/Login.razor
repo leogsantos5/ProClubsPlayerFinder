@@ -51,7 +51,7 @@
             if (apiExc.StatusCode >= 200 && apiExc.StatusCode < 300)
                 NavigateToLogin();
 
-            message = apiExc.Response;
+            message = apiExc.ErrorMessage;
         }
     }
 

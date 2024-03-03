@@ -42,6 +42,39 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
             catch { return await Task.FromResult(new AuthenticationState(anonymous)); }
         }
 
+        public async Task UpdateAuthenticationState(string jwtToken)
+        {
+            var claimsPrincipal = new ClaimsPrincipal();
+            if (!string.IsNullOrEmpty(jwtToken))
+            {
+                var getUserClaims = GetCustomUserClaimsFromToken(jwtToken, "");
+                claimsPrincipal = SetClaimPrincipal(getUserClaims);
+                await localStorageService.SetItemAsStringAsync("token", jwtToken);
+            }
+            else
+            {
+                claimsPrincipal = anonymous;
+                await localStorageService.RemoveItemAsync("token");
+            }
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
+        }
+
+        public async Task UpdateNewAuthStateWithChangedRole(string jwtToken, string newRole)
+        {
+            var newUserClaims = GetCustomUserClaimsFromToken(jwtToken, newRole);
+            var newClaimsPrincipal = SetClaimPrincipal(newUserClaims);
+            await localStorageService.SetItemAsStringAsync("token", jwtToken);
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(newClaimsPrincipal)));
+        }
+
+        public async Task LogOut()
+        {
+            await localStorageService.RemoveItemAsync("token");
+            var nobody = new ClaimsPrincipal(new ClaimsIdentity());
+            var authState = Task.FromResult(new AuthenticationState(nobody));
+            NotifyAuthenticationStateChanged(authState);
+        }
+
         public static ClaimsPrincipal SetClaimPrincipal(CustomUserClaims claims)
         {
             if (claims.Email is null) return new ClaimsPrincipal();
@@ -70,46 +103,12 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
             return new CustomUserClaims(name!.Value, email!.Value, role);
         }
 
-        public async Task UpdateAuthenticationState(string jwtToken)
-        {
-            var claimsPrincipal = new ClaimsPrincipal();
-            if (!string.IsNullOrEmpty(jwtToken))
-            {
-                var getUserClaims = GetCustomUserClaimsFromToken(jwtToken, "");
-                claimsPrincipal = SetClaimPrincipal(getUserClaims);
-                await localStorageService.SetItemAsStringAsync("token", jwtToken);
-            }
-            else
-            {
-                claimsPrincipal = anonymous;
-                await localStorageService.RemoveItemAsync("token");
-            }
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
-        }
-
-        public async Task LogOut()
-        {
-            await localStorageService.RemoveItemAsync("token");
-            var nobody = new ClaimsPrincipal(new ClaimsIdentity());
-            var authState = Task.FromResult(new AuthenticationState(nobody));
-            NotifyAuthenticationStateChanged(authState);
-        }
-
-        public async Task UpdateNewAuthStateWithChangedRole(string jwtToken, string newRole)
-        {
-            var newUserClaims = GetCustomUserClaimsFromToken(jwtToken, newRole);
-            var newClaimsPrincipal = SetClaimPrincipal(newUserClaims);
-            await localStorageService.SetItemAsStringAsync("token", jwtToken);
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(newClaimsPrincipal)));
-        }
-
         public string GetUserIdFromToken(string jwtToken)
         {
             var handler = new JwtSecurityTokenHandler();
             var tokenContent = handler.ReadJwtToken(jwtToken);
             var userId = tokenContent.Claims.FirstOrDefault(claim => claim.Type == "uid")!.Value;
             return userId;
-        }
-    
+        }   
     }
 }
