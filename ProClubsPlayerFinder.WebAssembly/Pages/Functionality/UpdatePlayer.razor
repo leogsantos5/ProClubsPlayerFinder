@@ -1,0 +1,97 @@
+﻿@page "/updatePlayer"
+
+<div class="d-flex flex-row">
+    <div class="col-lg-6 d-flex flex-column justify-content-center px-4 pt-2" style="background-color: black">
+        <h1 class="text-white">Edit Player Info</h1>
+
+        <EditForm Model="UpdatePlayerModel" OnValidSubmit="HandlePlayerUpdate">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mt-2">
+                <label for="gamingplatformaccountid" class="text-white">Console UserID</label>
+                <InputText class="form-control mt-1" placeholder="Type your console username" @bind-Value="UpdatePlayerModel.GamingPlatformAccountId" />
+                <ValidationMessage For="@(() => UpdatePlayerModel.GamingPlatformAccountId)" />
+            </div>
+            <div class="mt-2">
+                <label for="console" class="text-white">Console</label>
+                <select class="form-control" @bind="UpdatePlayerModel.Console">
+                    <option> Choose a console: </option>
+                    <option checked="@(UpdatePlayerModel.Console == Constants.Consoles[0])" value="@Constants.Consoles[0]"> PS5 </option>
+                    <option checked="@(UpdatePlayerModel.Console == Constants.Consoles[1])" value="@Constants.Consoles[1]"> XBox X </option>
+                    <option checked="@(UpdatePlayerModel.Console == Constants.Consoles[2])" value="@Constants.Consoles[2]"> PC </option>
+                </select>
+                <ValidationMessage For="@(() => UpdatePlayerModel.Console)" />
+            </div>
+            <div class="mt-2">
+                <label for="country" class="text-white">Country</label>
+                <InputText class="form-control mt-1" placeholder="Playing location" @bind-Value="UpdatePlayerModel.Country" />
+                <ValidationMessage For="@(() => UpdatePlayerModel.Country)" />
+            </div>
+            <div class="mt-2">
+                <label for="description" class="text-white">Description</label>
+                <InputTextArea class="form-control mt-1" placeholder="@Constants.PlayerDescriptionPlaceholder" style="height: 25vh;" @bind-Value="UpdatePlayerModel.Description" />
+                <ValidationMessage For="@(() => UpdatePlayerModel.Description)" />
+            </div>
+            <div class="mt-2 text-center">
+                <button type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> Update Profile </button>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col-lg-6 backgroundWallpaperCss"> </div>
+</div>
+
+@code {
+    // [Parameter]
+    // public int PlayerId { get; set; }  
+
+    private string AuthenticatedUserId = "";
+
+    UpdatePlayerDto UpdatePlayerModel = new UpdatePlayerDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();   
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                UpdatePlayerModel = await httpClient.GetFromJsonAsync<UpdatePlayerDto>($"api/Players/GetPlayer/{AuthenticatedUserId}");
+        }
+    }
+
+    private async Task HandlePlayerUpdate()
+    {
+        try
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.PutAsJsonAsync($"api/Players/UpdatePlayer/{AuthenticatedUserId}", UpdatePlayerModel);
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Profile Updated!",
+                                Text = "Your player info was successfully updated",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        navManager.NavigateTo("/");
+                    }
+                }
+            }
+        }
+        catch (ApiException)
+        {
+            await js.InvokeVoidAsync("alert", "Exception encountered");
+        }
+    }
+}

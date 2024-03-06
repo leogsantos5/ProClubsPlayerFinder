@@ -23,6 +23,11 @@ namespace ProClubsPlayerFinder.ClassLibrary.DTOs.ClassLibraryUserDTOs
         [Required]
         public string? Console { get; set; }
 
+        public string? Description { get; set; }
+
+        public int? ClubId { get; set; }
+
         public string? Role { get; set; }
+
     }
 }

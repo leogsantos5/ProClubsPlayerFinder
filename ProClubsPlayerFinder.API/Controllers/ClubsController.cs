@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProClubsPlayerFinder.API.Data;
+using ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs;
+using ProClubsPlayerFinder.ClassLibrary.DTOs.ClassLibraryUserDTOs;
 using ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs;
 using static System.Reflection.Metadata.BlobBuilder;
 
@@ -182,5 +184,70 @@ namespace ProClubsPlayerFinder.API.Controllers
 
             return Ok(clubPlayers);
         }
+
+        // DELETE: Remove a Player from a Club
+        [HttpDelete("RemovePlayer/{clubOwnerId}/{playerEmail}")]
+        [Authorize(Roles = "Club Owner")]
+        public async Task<IActionResult> RemovePlayer(string clubOwnerId, string playerEmail)
+        {
+            try
+            {
+                var clubOwner = await context.Players.FindAsync(clubOwnerId);
+                if (clubOwner == null || clubOwner.ClubId == null)
+                    return NotFound("Club owner not found or not associated with a club.");
+
+                var playerToRemove = await context.Players.FirstOrDefaultAsync(p => p.Email == playerEmail && p.ClubId == clubOwner.ClubId);
+                if (playerToRemove == null)
+                    return NotFound("Player not found.");
+
+                playerToRemove.ClubId = null;
+                //await userManager.RemoveFromRoleAsync(playerToRemove, "Player");
+                //await userManager.AddToRoleAsync(playerToRemove, "Free Agent");
+                await context.SaveChangesAsync();
+
+                return Ok("Player removed from the club successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+        [HttpGet("GetClubPlayers/{clubOwnerId}/{includeOwner}")]
+        [Authorize(Roles = "Club Owner")]
+        public async Task<ActionResult<IEnumerable<ApiUserDto>>> GetClubPlayers(string clubOwnerId, bool includeOwner)
+        {
+            try
+            {
+                Club? club = await context.Clubs.Where(c => c.OwnerPlayerId == clubOwnerId).FirstOrDefaultAsync();
+
+                if (club == null)
+                    return NotFound(); // Club not found for the given owner ID
+
+                var clubPlayers = await context.Players.Where(p => p.ClubId == club.Id).OrderBy(p => p.GamingPlatformAccountId).ToListAsync();
+
+                if (!includeOwner)
+                    clubPlayers = clubPlayers.Where(p => p.Id != clubOwnerId).ToList();
+
+                var clubPlayersDto = clubPlayers.Select(player => new ApiUserDto
+                {
+                    Email = player.Email,
+                    FirstName = player.FirstName,
+                    LastName = player.LastName,
+                    DateOfBirth = player.DateOfBirth,
+                    Country = player.Country,
+                    GamingPlatformAccountId = player.GamingPlatformAccountId,
+                    Console = player.Console
+                }).Take(10).ToList();
+
+                return Ok(clubPlayersDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+
     }
 }

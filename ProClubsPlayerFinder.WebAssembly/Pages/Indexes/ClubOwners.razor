@@ -10,20 +10,23 @@
     }
 </style>
 
-<div class="mt-4 text-center">
-    <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" > Search for Free Agents </NavLink>
+<div class="text-center">
+    <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" href="/searchFreeAgents/empty"> Search for Free Agents </NavLink>
 </div>
 <div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" @onclick="NavigateToUpdateClub"> Edit Club Info </NavLink>
 </div>
-<div class="mt-4 text-center">
+@* <div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> Club Group Chat </NavLink>
-</div>
+</div> *@
 <div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black"> View Players </NavLink>
 </div>
 <div class="mt-4 text-center">
-    <NavLink type="submit" class="btn btn-lg btn-warning btn-block text-black"> Remove Players </NavLink>
+    <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" href="updatePlayer"> Edit your profile </NavLink>
+</div>
+<div class="mt-4 text-center">
+    <NavLink type="submit" class="btn btn-lg btn-warning btn-block text-black" href="/removeClubPlayers"> Remove Players </NavLink>
 </div>
 <div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-danger btn-block text-black" @onclick="HandleDeleteClub"> Delete Club </NavLink>

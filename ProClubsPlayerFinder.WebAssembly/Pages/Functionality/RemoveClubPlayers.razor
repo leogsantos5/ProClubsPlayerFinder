@@ -1,0 +1,99 @@
+﻿@page "/removeClubPlayers"
+
+<div class="d-flex flex-row">
+    <div class="col-lg-7 d-flex flex-column justify-content-start pt-4" style="background-color: black; height: 100vh; color: white">
+        <h1 class="mb-3" style="margin-left: 10px">Search Free Agents</h1>
+        @if (ClubPlayersQueryable!.Count() == 0)
+        {
+            <h4 class="mt-4" style="margin-left: 10px">Your club has no players. Go back and search for Free Agents!</h4>
+        }
+        else
+        {
+            <QuickGrid Items="@ClubPlayersQueryable" style="margin-left: 10px">
+                <PropertyColumn class="w-auto" Title="Name" Property="@(p => (p.FirstName + " " + p.LastName))" />
+                <PropertyColumn class="w-auto" Title="Age" Property="@(p => ComputeAgeFromBirthDate((DateTime) p.DateOfBirth!))" />
+                <PropertyColumn class="w-auto" Property="@(p => p.Console)" />
+                <PropertyColumn class="w-auto" Title="Username" Property="@(p => p.GamingPlatformAccountId)">
+                </PropertyColumn>
+                <PropertyColumn class="w-auto" Property="@(p => p.Country)" />
+                <TemplateColumn Title="Action">
+                    <button class="btn btn-warning btn-block text-black" @onclick="@(() => RemovePlayerFromClub(context.Email!))"> Remove Player </button>
+                </TemplateColumn>
+            </QuickGrid>
+        }        
+    </div>
+    <div class="col-lg-5 backgroundWallpaperCss"></div>
+</div>
+
+@code {
+    static List<ApiUserDto>? ClubPlayersList = new();
+    IQueryable<ApiUserDto> ClubPlayersQueryable = Enumerable.Empty<ApiUserDto>().AsQueryable();
+
+    private string AuthenticatedUserId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
+        await GetFirstTenClubPlayers();
+        ConvertListToQueryable();
+    }
+
+    private async Task GetFirstTenClubPlayers()
+    {
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                ClubPlayersList = await httpClient.GetFromJsonAsync<List<ApiUserDto>>($"api/Clubs/GetClubPlayers/" + AuthenticatedUserId + "/false");
+        }
+    }
+
+    private void ConvertListToQueryable()
+    {
+        if (ClubPlayersList != null && ClubPlayersList.Count() != 0)
+        {
+            foreach (var freeAgent in ClubPlayersList.OrderBy(p => p.GamingPlatformAccountId))
+                ClubPlayersQueryable = ClubPlayersQueryable.Concat(new[] { freeAgent }.AsQueryable());
+        }
+        else
+            ClubPlayersQueryable = Enumerable.Empty<ApiUserDto>().AsQueryable();
+    }
+
+    private string ComputeAgeFromBirthDate(DateTime dateOfBirth)
+    {
+        DateTime currentDate = DateTime.Now;
+        int age = currentDate.Year - dateOfBirth.Year;
+        if (currentDate.Month < dateOfBirth.Month || (currentDate.Month == dateOfBirth.Month && currentDate.Day < dateOfBirth.Day))
+            age--;
+
+        return age.ToString();
+    }
+
+    private async Task RemovePlayerFromClub(string playerEmail)
+    {
+        var removePlayerConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Remove Player?",
+                text: "Are you sure you want to remove this player from your club?", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+        if (removePlayerConfirm)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.DeleteAsync("api/Clubs/RemovePlayer/" + AuthenticatedUserId + "/" + playerEmail);
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await GetFirstTenClubPlayers();
+                        ConvertListToQueryable(); // refresh grid
+                    }
+                }
+            }
+        }
+    }
+}
+

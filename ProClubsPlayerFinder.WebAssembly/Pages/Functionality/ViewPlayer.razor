@@ -1,0 +1,54 @@
+﻿@page "/viewPlayer/{Email}/{SearchInputParam}"
+
+<div class="d-flex flex-row">
+    <div class="col-lg-6 d-flex flex-column justify-content-center px-4" style="background-color: black">
+        <h1 class="text-white">View Player Info</h1>
+
+        <div class="mt-2">
+            <label class="text-white">Console UserID</label>
+            <div class="form-control mt-1">@UpdatePlayerModel.GamingPlatformAccountId</div>
+        </div>
+        <div class="mt-2">
+            <label class="text-white">Console</label>
+            <div class="form-control mt-1">@UpdatePlayerModel.Console</div>
+        </div>
+        <div class="mt-2">
+            <label class="text-white">Country</label>
+            <div class="form-control mt-1">@UpdatePlayerModel.Country</div>
+        </div>
+        <div class="mt-2">
+            <label class="text-white">Description</label>
+            <div class="form-control mt-1" style="height: 25vh;">@UpdatePlayerModel.Description</div>
+        </div>
+        <div class="mt-4 text-center">
+            <button class="btn btn-lg btn-success green-background btn-block text-black" @onclick="GoBackToSearch"> Go Back </button>
+        </div>
+    </div>
+    <div class="col-lg-6 backgroundWallpaperCss"> </div>
+</div>
+
+@code{
+    [Parameter]
+    public string Email { get; set; }
+
+    [Parameter]
+    public string SearchInputParam { get; set; }
+
+    UpdatePlayerDto UpdatePlayerModel = new UpdatePlayerDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                UpdatePlayerModel = await httpClient.GetFromJsonAsync<UpdatePlayerDto>($"api/Players/GetPlayer/{Email}");
+        }
+    }
+
+    private void GoBackToSearch(){
+        navManager.NavigateTo("/searchFreeAgents/" + SearchInputParam);
+    }
+}

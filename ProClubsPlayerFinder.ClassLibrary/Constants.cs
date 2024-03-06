@@ -25,6 +25,8 @@ namespace ProClubsPlayerFinder.ClassLibrary
         public static string anonymousUserPhrase = "Login to your account or Register";
 
         public static string ClubDescriptionPlaceholder = "Use this to write info about the club. For example: style of play, type of players the club is looking for, the division it´s on, links to youtube videos of gameplay, anything you think is relevant! (Max 255 characters)";
+        
+        public static string PlayerDescriptionPlaceholder = "Show who you are as a clubs player! Put ur level, ur experience, ur best positions, ur style of play, links to youtube clips of ur gameplay, discord name, EAFC username, etc... Be creative!";
 
         public static string TokenExpiredError = "Session Expired!";
 

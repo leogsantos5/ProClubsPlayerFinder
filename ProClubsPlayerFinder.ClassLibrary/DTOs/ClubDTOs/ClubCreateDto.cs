@@ -6,7 +6,7 @@ namespace ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs
     {
         //public string OwnerPlayerId { get; set; }
         [Required]
-        [StringLength(256)]
+        [StringLength(512)]
         public string Description { get; set; }
         [Required]
         public string ClubName { get; set; }

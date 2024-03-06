@@ -1,0 +1,127 @@
+﻿@page "/searchFreeAgents/{SearchInputParam}"
+
+<div class="d-flex flex-row">
+    <div class="col-lg-7 d-flex flex-column justify-content-start pt-4" style="background-color: black; height: 100vh; color: white">
+        <h1 class="mb-3" style="margin-left: 10px">Search Free Agents</h1>
+
+        <div class="input-group mb-3 w-50" style="margin-left: 10px">
+            <input type="search" id="searchInputElement" autofocus class="form-control" @onchange="SearchPlayerFromInput" placeholder="Search for Player (Username)" />
+        </div>
+        @if (GridLoading)
+        {
+            <h4 class="mt-4" style="margin-left: 10px">Loading... Please wait</h4>
+        }
+        else if (string.IsNullOrWhiteSpace(SearchInput) || FreeAgentsQueryable!.Count() == 0)
+        {
+            <h4 class="mt-4" style="margin-left: 10px">Empty results. Please search for a Player</h4>
+        }
+        else
+        {
+            <QuickGrid Items="@FreeAgentsQueryable" style="margin-left: 10px">
+                <PropertyColumn class="w-auto" Title="Name" Property="@(p => (p.FirstName + " " + p.LastName))"/>
+                <PropertyColumn class="w-auto" Title="Age" Property="@(p => ComputeAgeFromBirthDate((DateTime) p.DateOfBirth!))" />
+                <PropertyColumn class="w-auto" Property="@(p => p.Console)" />
+                <PropertyColumn class="w-auto" Title="Username" Property="@(p => p.GamingPlatformAccountId)">
+                </PropertyColumn>
+                <PropertyColumn class="w-auto" Property="@(p => p.Country)" />
+                <TemplateColumn Title="Player Profile">
+                    <button class="btn btn-success green-background btn-block text-black" @onclick="@(() => GoToViewPlayer(context.Email!))"> View Player </button>
+                </TemplateColumn>
+            </QuickGrid>    
+        }
+    </div>
+    <div class="col-lg-5 backgroundWallpaperCss"> </div> 
+</div>
+
+@code {
+    [Parameter]
+    public string SearchInputParam { get; set; }
+
+    private string SearchInput = string.Empty;
+    private bool GridLoading = false;
+
+    static List<ApiUserDto>? FreeAgentsList = new();
+    IQueryable<ApiUserDto> FreeAgentsQueryable = Enumerable.Empty<ApiUserDto>().AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (SearchInputParam != "empty")
+            await SearchPlayerFromSameInputAgain();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (SearchInputParam != "empty")
+            await js.InvokeVoidAsync("setInputValueById", "searchInputElement", SearchInputParam);
+    }
+
+    private async Task GetFirstTenMatchingPlayers()
+    {
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                FreeAgentsList = await httpClient.GetFromJsonAsync<List<ApiUserDto>>($"api/Players/GetFreeAgents");
+        }
+    }
+
+    private void ConvertListToQueryable()
+    {
+        if (FreeAgentsList is null) return;
+        foreach (var freeAgent in FreeAgentsList.OrderBy(p => p.GamingPlatformAccountId))
+            FreeAgentsQueryable = FreeAgentsQueryable.Concat(new[] { freeAgent }.AsQueryable());
+    }
+
+    private async Task SearchPlayerFromSameInputAgain()
+    {
+        await RefreshGrid(SearchInputParam);
+    }
+
+    private async Task SearchPlayerFromInput(ChangeEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(e.Value!.ToString()))
+            await RefreshGrid(e.Value!.ToString()!);
+        else
+            SearchInput = string.Empty;
+    }
+
+    private async Task RefreshGrid(string searchInput)
+    {
+        GridLoading = true;
+        SearchInput = searchInput;
+        IQueryable<ApiUserDto> updatedQueryable = Enumerable.Empty<ApiUserDto>().AsQueryable();
+        await GetFirstTenMatchingPlayers();
+        foreach (var freeAgent in FreeAgentsList!)
+        {
+            if (freeAgent.GamingPlatformAccountId!.Contains(searchInput!))
+                updatedQueryable = updatedQueryable.Append(freeAgent).AsQueryable();
+        }
+        FreeAgentsQueryable = updatedQueryable;
+        GridLoading = false;
+    }
+
+    private void CleanAndGetDataAgainToQueryable()
+    {
+        FreeAgentsQueryable = Enumerable.Empty<ApiUserDto>().AsQueryable();
+        ConvertListToQueryable();
+    }
+
+    private string ComputeAgeFromBirthDate(DateTime dateOfBirth)
+    {
+        DateTime currentDate = DateTime.Now;
+        int age = currentDate.Year - dateOfBirth.Year;
+        if (currentDate.Month < dateOfBirth.Month || (currentDate.Month == dateOfBirth.Month && currentDate.Day < dateOfBirth.Day))
+            age--;
+
+        return age.ToString();
+    }
+
+    private void GoToViewPlayer(string playerEmail)
+    {
+        navManager.NavigateTo("viewPlayer/" + playerEmail + "/" + SearchInput);
+    }
+}
+
+ 

@@ -49,6 +49,7 @@ public partial class ClubsPlayerFinderEafc24Context : IdentityDbContext<ApiUser>
             entity.HasKey(e => e.Id).HasName("PK__tmp_ms_x__4A4E74C8A7D90612");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Description).HasMaxLength(512);
             entity.Property(e => e.Console).HasMaxLength(20);
             entity.Property(e => e.Country).HasMaxLength(20);
             entity.Property(e => e.Email).HasMaxLength(256);

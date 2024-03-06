@@ -10,6 +10,8 @@ namespace ProClubsPlayerFinder.API.Data
 
         public string? LastName { get; set; }
 
+        public string? Description { get; set; }
+
         public DateTime? DateOfBirth { get; set; }
 
         public string? Country { get; set; }
