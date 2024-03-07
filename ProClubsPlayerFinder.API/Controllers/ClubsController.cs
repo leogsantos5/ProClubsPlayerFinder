@@ -201,8 +201,8 @@ namespace ProClubsPlayerFinder.API.Controllers
                     return NotFound("Player not found.");
 
                 playerToRemove.ClubId = null;
-                //await userManager.RemoveFromRoleAsync(playerToRemove, "Player");
-                //await userManager.AddToRoleAsync(playerToRemove, "Free Agent");
+                await userManager.RemoveFromRoleAsync(playerToRemove, "Player");
+                await userManager.AddToRoleAsync(playerToRemove, "Free Agent");
                 await context.SaveChangesAsync();
 
                 return Ok("Player removed from the club successfully.");
