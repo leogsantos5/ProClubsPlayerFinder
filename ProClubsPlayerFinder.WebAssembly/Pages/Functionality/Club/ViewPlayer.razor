@@ -1,0 +1,91 @@
+﻿@page "/viewPlayer/{Email}/{SearchInputParam}"
+
+<div class="d-flex flex-row">
+    <div class="col-lg-6 d-flex flex-column justify-content-center px-4" style="background-color: black">
+        <h1 class="text-white mb-4">View Player Info</h1>
+
+        <div class="d-flex flex-row justify-content-start mb-2">
+            <div class="mt-2">
+                <label class="text-white" style="font-size: 1.2rem;">Console UserID</label>
+                <div class="mt-1" style="color: #70f06c; font-size: 1.2rem;">@UpdatePlayerModel.GamingPlatformAccountId</div>
+            </div>
+            <div class="mt-2 ms-4">
+                <label class="text-white" style="font-size: 1.2rem;">Console</label>
+                <div class="mt-1" style="color: #70f06c; font-size: 1.2rem;">@UpdatePlayerModel.Console</div>
+            </div>
+            <div class="mt-2 ms-4">
+                <label class="text-white" style="font-size: 1.2rem;">Country</label>
+                <div class="mt-1" style="color: #70f06c; font-size: 1.2rem;">@UpdatePlayerModel.Country</div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <label class="text-white" style="font-size: 1.2rem;">Description</label>
+            <div class="mt-1" style="height: 25vh; color: #70f06c;">@UpdatePlayerModel.Description</div>
+        </div>
+        <div class="mt-4 text-center d-flex justify-content-between">
+            <button class="btn btn-lg green-background btn-block text-black" @onclick="GoBackToSearch"> Go Back </button>
+            <button class="btn btn-lg btn-success text-white" @onclick="InvitePlayerToJoinClub">Invite to Join</button>
+        </div>
+    </div>
+    <div class="col-lg-6 backgroundWallpaperCss"> </div>
+</div>
+
+@code{
+    [Parameter]
+    public string Email { get; set; }
+
+    [Parameter]
+    public string SearchInputParam { get; set; }
+
+    private string AuthenticatedUserId = "";
+
+    UpdatePlayerDto UpdatePlayerModel = new UpdatePlayerDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                UpdatePlayerModel = await httpClient.GetFromJsonAsync<UpdatePlayerDto>($"api/Players/GetPlayer/{Email}");
+        }
+    }
+
+    private async Task InvitePlayerToJoinClub()
+    {
+        var invitePlayerConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Invite Player?",
+                text: "Are you sure you want to invite this player to join your club?", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+        if (invitePlayerConfirm)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage){
+                    var httpResponse = await httpClient.GetAsync($"api/Clubs/InvitePlayerToJoinClub/{AuthenticatedUserId}/{UpdatePlayerModel.GamingPlatformAccountId}");
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Invite sent!",
+                                Text = "You have successfully invited " + UpdatePlayerModel.GamingPlatformAccountId + " to join your club!",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        navManager.NavigateTo("/");
+                    }
+                }
+            }
+        }
+    }
+
+    private void GoBackToSearch(){
+        navManager.NavigateTo("/searchFreeAgents/" + SearchInputParam);
+    }
+}

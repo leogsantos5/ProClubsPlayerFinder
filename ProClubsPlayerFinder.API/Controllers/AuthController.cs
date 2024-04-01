@@ -99,6 +99,7 @@ namespace ProClubsPlayerFinder.API.Controllers
             .Union(userClaims)
             .Union(roleClaims);
 
+            //TimeZoneInfo.ClearCachedData();
             var token = new JwtSecurityToken(
                 issuer: configuration["JwtSettings:Issuer"],
                 audience: configuration["JwtSettings:Audience"],
@@ -106,6 +107,7 @@ namespace ProClubsPlayerFinder.API.Controllers
                 expires: DateTime.UtcNow.AddMinutes(Convert.ToInt32(configuration["JwtSettings:Duration"])),
                 signingCredentials: credentials
             );
+            //token.ValidTo.AddHours(1);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

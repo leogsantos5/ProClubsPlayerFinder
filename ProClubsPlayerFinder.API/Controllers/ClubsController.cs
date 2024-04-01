@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -31,9 +32,18 @@ namespace ProClubsPlayerFinder.API.Controllers
 
         // GET: All Clubs
         [HttpGet("GetClubs")]
-        public async Task<ActionResult<IEnumerable<Club>>> GetClubs()
+        public async Task<ActionResult<IEnumerable<ClubUpdateDto>>> GetClubs()
         {
-            return Ok(await context.Clubs.ToListAsync());
+            var clubDtos = await context.Clubs
+                .Select(club => new ClubUpdateDto
+                {
+                    ClubId = club.Id,
+                    ClubName = club.ClubName,
+                    Console = club.Console,
+                    Description = club.Description
+                }).Take(10).ToListAsync();
+
+            return Ok(clubDtos);
         }
 
         // GET: Gets specific Club
@@ -50,6 +60,28 @@ namespace ProClubsPlayerFinder.API.Controllers
                 ClubName = club.ClubName!,
                 Description = club.Description!,
                 Console = club.Console!
+            };
+
+            return Ok(clubUpdateDto);
+        }
+
+        // GET: Gets specific Club details
+        [HttpGet("GetClubDetails/{id}")]
+        public async Task<ActionResult<Club>> GetClubDetails(int? id)
+        {
+            var club = await context.Clubs.FirstOrDefaultAsync(c => c.Id == id);
+            if (club == null)
+                return NotFound(); // Return a 404 Not Found if the club is not found
+
+            var clubPlayersCount = context.Players.Where(p => p.ClubId == id).Count();
+
+            ClubDetailsDto clubUpdateDto = new ClubDetailsDto
+            {
+                ClubId = club.Id!,
+                ClubName = club.ClubName!,
+                Description = club.Description!,
+                Console = club.Console!,
+                NumberOfPlayers = clubPlayersCount
             };
 
             return Ok(clubUpdateDto);
@@ -248,6 +280,138 @@ namespace ProClubsPlayerFinder.API.Controllers
             }
         }
 
+        [HttpGet("GetClubJoinRequests/{clubOwnerId}")]
+        [Authorize(Roles = "Club Owner")]
+        public async Task<ActionResult<IEnumerable<JoinRequestDto>>> GetClubJoinRequests(string clubOwnerId)
+        {
+            try
+            {
+                Club? club = await context.Clubs.Where(c => c.OwnerPlayerId == clubOwnerId).FirstOrDefaultAsync();
 
+                List<Request> requests = await context.Requests
+                    .Where(r => r.ClubId == club.Id)
+                    .ToListAsync();
+
+                List<JoinRequestDto> requestDtos = requests.Select(r => new JoinRequestDto
+                {
+                    Id = r.Id,
+                    GamingPlatformAccountId = GetGamingPlatformAccountIdFromApiUserId(r.ApiUserId)
+                }).ToList();
+
+                return Ok(requestDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+        // Get: Requests player to join yout club
+        [HttpGet("InvitePlayerToJoinClub/{clubOwnerId}/{gamingPlatformAccountId}")]
+        [Authorize(Roles = "Club Owner")]
+        public async Task<IActionResult> InvitePlayerToJoinClub(string clubOwnerId, string gamingPlatformAccountId)
+        {
+            try
+            {
+                var playerId = context.Players.Where(p => p.GamingPlatformAccountId == gamingPlatformAccountId).FirstOrDefaultAsync().Result!.Id;
+                var clubId = context.Clubs.Where(c => c.OwnerPlayerId == clubOwnerId).FirstOrDefaultAsync().Result!.Id;
+                Invite invite = new Invite
+                {
+                    ClubId = clubId,
+                    ApiUserId = playerId
+                };
+                context.Invites.Add(invite);
+                await context.SaveChangesAsync();
+
+                return Ok("Invite sucessfully sent.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+        [HttpGet("GetClubJoinInvites/{playerId}")]
+        [Authorize(Roles = "Free Agent")]
+        public async Task<ActionResult<IEnumerable<ClubInviteDto>>> GetClubJoinInvites(string playerId)
+        {
+            try
+            {
+                List<Invite> invites = await context.Invites
+                    .Where(i => i.ApiUserId == playerId)
+                    .ToListAsync();
+
+                List<ClubInviteDto> invitesDtos = invites.Select(i => new ClubInviteDto
+                {
+                    Id = i.Id,
+                    ClubName = GetClubNameFromClubId(i.ClubId)
+                }).ToList();
+
+                return Ok(invitesDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+        
+        [HttpGet("AcceptPlayerJoinRequest/{requestId}")]
+        [Authorize(Roles = "Club Owner")]
+        public async Task<IActionResult> AcceptPlayerJoinRequest(int requestId)
+        {
+            try
+            {
+                Request? request = await context.Requests.Where(i => i.Id == requestId).FirstOrDefaultAsync();
+                var newPlayerId = request!.ApiUserId;
+                var newPlayer = await context.Players.FindAsync(newPlayerId);
+                var clubId = request!.ClubId;
+                var club = context.Clubs.FindAsync(clubId).Result;
+                await userManager.RemoveFromRoleAsync(newPlayer, "Free Agent");
+                await userManager.AddToRoleAsync(newPlayer, "Player");
+                club!.Players.Add(newPlayer);
+
+                context.Requests.Remove(request!);
+                Invite? invite = await context.Invites.Where(i => i.ApiUserId == newPlayerId).FirstOrDefaultAsync();
+                if (invite != null)
+                    context.Invites.Remove(invite);
+
+                await context.SaveChangesAsync();
+
+                return Ok("Request sucessfully accepted.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+        [HttpGet("RejectPlayerJoinRequest/{requestId}")]
+        [Authorize(Roles = "Club Owner")]
+        public async Task<IActionResult> RejectPlayerJoinRequest(int requestId)
+        {
+            try
+            {
+                Request? request = await context.Requests.Where(i => i.Id == requestId).FirstOrDefaultAsync();
+
+                context.Requests.Remove(request!);
+                await context.SaveChangesAsync();
+
+                return Ok("Request sucessfully rejected.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+        private string GetGamingPlatformAccountIdFromApiUserId(string playerId)
+        {
+            return context.Users.FirstOrDefaultAsync(p => p.Id == playerId).Result!.GamingPlatformAccountId!;
+        }
+        
+        private string GetClubNameFromClubId(int clubId)
+        {
+            return context.Clubs.FirstOrDefaultAsync(c => c.Id == clubId).Result!.ClubName!;
+        }
     }
 }

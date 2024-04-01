@@ -41,4 +41,11 @@ namespace ProClubsPlayerFinder.ClassLibrary
 
         public static string RoleDictKey { get; } = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
     }
+
+    public class Status
+    {
+        public static string Pending { get; } = "Pending";
+        public static string Accepted { get; } = "Accepted";
+        public static string Rejected { get; } = "Rejected";
+    }
 }

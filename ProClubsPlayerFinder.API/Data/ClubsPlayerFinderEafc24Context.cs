@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using ProClubsPlayerFinder.ClassLibrary;
 
 namespace ProClubsPlayerFinder.API.Data;
 
@@ -23,6 +24,8 @@ public partial class ClubsPlayerFinderEafc24Context : IdentityDbContext<ApiUser>
 
     public virtual DbSet<Invite> Invites { get; set; }
 
+    public virtual DbSet<Request> Requests { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=localhost\\sqlexpress;Database=ClubsPlayerFinderEAFC24;Trusted_Connection=True;MultipleActiveResultSets=true;Encrypt=true;TrustServerCertificate=True");
@@ -37,20 +40,42 @@ public partial class ClubsPlayerFinderEafc24Context : IdentityDbContext<ApiUser>
 
             entity.Property(e => e.ApiUserId).IsRequired();
             entity.Property(e => e.ClubId).IsRequired();
-            entity.Property(e => e.Message).HasMaxLength(256);
-            entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("Pending");
+            //entity.Property(e => e.Message).HasMaxLength(256);
+            //entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue(Status.Pending);
 
             entity.HasOne(e => e.ApiUser)
                 .WithOne()
                 .HasForeignKey<Invite>(e => e.ApiUserId)
                 .HasConstraintName("FK_Invites_Players_Receiver")
-                .OnDelete(DeleteBehavior.Restrict); // You may adjust the delete behavior based on your requirements
+                .OnDelete(DeleteBehavior.Cascade); // You may adjust the delete behavior based on your requirements
 
             entity.HasOne(e => e.Club)
                 .WithOne()
                 .HasForeignKey<Invite>(e => e.ClubId)
                 .HasConstraintName("FK_Invites_Clubs_Sender")
-                .OnDelete(DeleteBehavior.Restrict); // You may adjust the delete behavior based on your requirements
+                .OnDelete(DeleteBehavior.Cascade); // You may adjust the delete behavior based on your requirements
+        });
+        
+        modelBuilder.Entity<Request>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.ApiUserId).IsRequired();
+            entity.Property(e => e.ClubId).IsRequired();
+            //entity.Property(e => e.Message).HasMaxLength(256);
+            //entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue(Status.Pending);
+
+            entity.HasOne(e => e.ApiUser)
+                .WithOne()
+                .HasForeignKey<Request>(e => e.ApiUserId)
+                .HasConstraintName("FK_Requests_Players_Sender")
+                .OnDelete(DeleteBehavior.Cascade); // You may adjust the delete behavior based on your requirements
+
+            entity.HasOne(e => e.Club)
+                .WithOne()
+                .HasForeignKey<Request>(e => e.ClubId)
+                .HasConstraintName("FK_Requests_Clubs_Receiver")
+                .OnDelete(DeleteBehavior.Cascade); // You may adjust the delete behavior based on your requirements
         });
 
 

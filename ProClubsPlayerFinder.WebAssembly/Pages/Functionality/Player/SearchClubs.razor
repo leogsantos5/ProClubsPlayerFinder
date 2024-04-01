@@ -1,0 +1,111 @@
+﻿@page "/searchClubs/{SearchInputParam}"
+
+<div class="d-flex flex-row">
+    <div class="col-lg-5 d-flex flex-column justify-content-start pt-4" style="background-color: black; height: 100vh; color: white">
+        <h1 class="mb-3" style="margin-left: 10px">Search Clubs</h1>
+
+        <div class="input-group mb-3 w-50" style="margin-left: 10px">
+            <input type="search" id="searchInputElement" autofocus class="form-control" @onchange="SearchClubFromInput" placeholder="Search for Club" />
+        </div>
+        @if (GridLoading)
+        {
+            <h4 class="mt-4" style="margin-left: 10px">Loading... Please wait</h4>
+        }
+        else if (string.IsNullOrWhiteSpace(SearchInput) || ClubsQueryable!.Count() == 0)
+        {
+            <h4 class="mt-4" style="margin-left: 10px">Empty results. Please search for a Club</h4>
+        }
+        else
+        {
+            <QuickGrid Items="@ClubsQueryable" class="ms-2">
+                <PropertyColumn class="w-auto" Title="Club Name" Property="@(club => club.ClubName)" />
+                <PropertyColumn class="w-auto" Title="Console" Property="@(club => club.Console)" />
+                <TemplateColumn Title="Club Details">
+                    <button class="btn btn-success green-background btn-block text-black" @onclick="@(() => GoToViewClub(context.ClubId))"> View Club </button>
+                </TemplateColumn>
+            </QuickGrid>
+        }
+    </div>
+    <div class="col-lg-7 backgroundWallpaperCss"> </div>
+</div>
+
+@code {
+    [Parameter]
+    public string SearchInputParam { get; set; }
+
+    private string SearchInput = string.Empty;
+    private bool GridLoading = false;
+
+    static List<ClubUpdateDto>? ClubsList = new();
+    IQueryable<ClubUpdateDto> ClubsQueryable = Enumerable.Empty<ClubUpdateDto>().AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (SearchInputParam != "empty")
+            await SearchClubFromSameInputAgain();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (SearchInputParam != "empty")
+            await js.InvokeVoidAsync("setInputValueById", "searchInputElement", SearchInputParam);
+    }
+
+    private async Task GetFirstTenMatchingClubs()
+    {
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                ClubsList = await httpClient.GetFromJsonAsync<List<ClubUpdateDto>>($"api/Clubs/GetClubs");
+        }
+    }
+
+    private void ConvertListToQueryable()
+    {
+        if (ClubsList is null) return;
+        foreach (var club in ClubsList.OrderBy(club => club.ClubName))
+            ClubsQueryable = ClubsQueryable.Concat(new[] { club }.AsQueryable());
+    }
+
+    private async Task SearchClubFromSameInputAgain()
+    {
+        await RefreshGrid(SearchInputParam);
+    }
+
+    private async Task SearchClubFromInput(ChangeEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(e.Value!.ToString()))
+            await RefreshGrid(e.Value!.ToString()!);
+        else
+            SearchInput = string.Empty;
+    }
+
+    private async Task RefreshGrid(string searchInput)
+    {
+        GridLoading = true;
+        SearchInput = searchInput;
+        IQueryable<ClubUpdateDto> updatedQueryable = Enumerable.Empty<ClubUpdateDto>().AsQueryable();
+        await GetFirstTenMatchingClubs();
+        foreach (var club in ClubsList!)
+        {
+            if (club.ClubName!.Contains(searchInput!))
+                updatedQueryable = updatedQueryable.Append(club).AsQueryable();
+        }
+        ClubsQueryable = updatedQueryable;
+        GridLoading = false;
+    }
+
+    private void CleanAndGetDataAgainToQueryable()
+    {
+        ClubsQueryable = Enumerable.Empty<ClubUpdateDto>().AsQueryable();
+        ConvertListToQueryable();
+    }
+
+    private void GoToViewClub(int clubId)
+    {
+        navManager.NavigateTo("viewClub/" + clubId + "/" + SearchInput);
+    }
+}

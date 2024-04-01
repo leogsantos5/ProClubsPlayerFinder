@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProClubsPlayerFinder.API.Data;
+using ProClubsPlayerFinder.API.Migrations;
 using ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs;
 using ProClubsPlayerFinder.ClassLibrary.DTOs.ClassLibraryUserDTOs;
 using ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs;
+using Request = ProClubsPlayerFinder.API.Data.Request;
 
 namespace ProClubsPlayerFinder.API.Controllers
 {
@@ -85,6 +88,78 @@ namespace ProClubsPlayerFinder.API.Controllers
             catch
             {
                 return StatusCode(500, new { Message = "Internal Server Error" });
+            }
+        }
+
+        [HttpGet("AcceptClubJoinInvite/{inviteId}")]
+        [Authorize(Roles = "Free Agent")]
+        public async Task<IActionResult> AcceptClubJoinInvite(int inviteId)
+        {
+            try
+            {
+                Invite? invite = await context.Invites.Where(i => i.Id == inviteId).FirstOrDefaultAsync();
+                var newPlayerId = invite!.ApiUserId;
+                var newPlayer = await context.Players.FindAsync(newPlayerId);
+                var clubId = invite!.ClubId;
+                var club = context.Clubs.FindAsync(clubId).Result;
+                await userManager.RemoveFromRoleAsync(newPlayer, "Free Agent");
+                await userManager.AddToRoleAsync(newPlayer, "Player");
+                club!.Players.Add(newPlayer);
+
+                context.Invites.Remove(invite!); 
+                Request? request = await context.Requests.Where(i => i.ApiUserId == newPlayerId).FirstOrDefaultAsync();
+                if (request != null)
+                    context.Requests.Remove(request);
+
+                await context.SaveChangesAsync();
+
+                return Ok("Invite sucessfully accepted.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+        [HttpGet("RejectClubJoinInvite/{inviteId}")]
+        [Authorize(Roles = "Free Agent")]
+        public async Task<IActionResult> RejectClubJoinInvite(int inviteId)
+        {
+            try
+            {
+                Invite? invite = await context.Invites.Where(i => i.Id == inviteId).FirstOrDefaultAsync();
+
+                context.Invites.Remove(invite!);
+                await context.SaveChangesAsync();
+
+                return Ok("Invite sucessfully rejected.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
+            }
+        }
+
+        // Get: Requests to join a club
+        [HttpGet("RequestToJoinClub/{clubId}/{playerId}")]
+        [Authorize(Roles = "Free Agent")]
+        public async Task<IActionResult> RequestToJoinClub(int clubId, string playerId)
+        {
+            try
+            {
+                Request request = new Request
+                {
+                    ClubId = clubId,
+                    ApiUserId = playerId
+                };
+                context.Requests.Add(request);
+                await context.SaveChangesAsync();
+
+                return Ok("Request sucessfully sent.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
             }
         }
     }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProClubsPlayerFinder.API.Data;
 
@@ -11,9 +12,11 @@ using ProClubsPlayerFinder.API.Data;
 namespace ProClubsPlayerFinder.API.Migrations
 {
     [DbContext(typeof(ClubsPlayerFinderEafc24Context))]
-    partial class ClubsPlayerFinderEafc24ContextModelSnapshot : ModelSnapshot
+    [Migration("20240325205717_AddedRequestsTable")]
+    partial class AddedRequestsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -296,7 +299,7 @@ namespace ProClubsPlayerFinder.API.Migrations
                         {
                             Id = "71a8b6ac-6395-41d8-94d4-e103350110c0",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "c4ee5469-cbb7-4f0d-8baa-de41d33502aa",
+                            ConcurrencyStamp = "b10f3d74-2a9d-4f5e-9691-81f253f45427",
                             Console = "PS5",
                             Country = "Portugal",
                             DateOfBirth = new DateTime(2001, 7, 13, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -307,16 +310,16 @@ namespace ProClubsPlayerFinder.API.Migrations
                             LastName = "Santos",
                             LockoutEnabled = false,
                             NormalizedEmail = "LEOGSANTOS5@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEuWiM14O14OkbDWyH8qGnG97tnUBI5QxP+VYnSLwjL5StmqtmsIbeC+k5yg0n2+gw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEPy3uMQncRABx4Ybw9a54pW8Idt4VSdgfahPQHyH6rYIrIEnSe2ENTsD3Rd1mtlW3Q==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "c96187fa-021d-4dce-8b50-8e020da6cdf0",
+                            SecurityStamp = "681db98f-fbf6-42c4-9a89-7ea19562c4fc",
                             TwoFactorEnabled = false
                         },
                         new
                         {
                             Id = "7b867b03-fd4a-4410-a9fd-abdc32bda959",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "6f39c986-2bee-4089-8563-696a971573fd",
+                            ConcurrencyStamp = "d23ce6ea-26f0-45a9-b2d1-5f8d22f54879",
                             Console = "PS5",
                             Country = "Portugal",
                             DateOfBirth = new DateTime(2000, 11, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -327,16 +330,16 @@ namespace ProClubsPlayerFinder.API.Migrations
                             LastName = "Silva",
                             LockoutEnabled = false,
                             NormalizedEmail = "MS2626242@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEJGZOLxKk9gxBlsqZOEzDK6gyvN5mKzZRYAnhvefE8bz9R+i674XQxH7epJGdl79Xw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEBx1tpIZAykmcEjhHZLMU1nIPducKkNYA0T6byjz3V36RO7EYpxSI2RziBv69BShSw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "ba58bd1a-dedc-4273-9355-8f02a283cacb",
+                            SecurityStamp = "a51bf218-cae7-464e-be63-dae255ef3cff",
                             TwoFactorEnabled = false
                         },
                         new
                         {
                             Id = "2ec68e2f-fa24-4abf-8bdf-d82f530adee0",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "063d9a9f-a75b-41d0-9c69-ab07da557dba",
+                            ConcurrencyStamp = "feee9db8-7bf8-480a-9ebc-90a3ed76929d",
                             Console = "PS5",
                             Country = "Portugal",
                             DateOfBirth = new DateTime(2003, 7, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -347,9 +350,9 @@ namespace ProClubsPlayerFinder.API.Migrations
                             LastName = "Santos",
                             LockoutEnabled = false,
                             NormalizedEmail = "BERNASTHEKING@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHgVsQbzMch/Xq0a2jKpvHjsjLMhBzEnq2wmj8hCQRAAqBVrtUe86Sv7vzioQLah5w==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGnmr50ZTYYLtndEMLtSvjjArpTftIuWo7ZXJ4tN2QkBXQQ/QVJ3fofsdSqxNQtx1g==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "1efa8114-628a-4796-b05b-83e4142bd334",
+                            SecurityStamp = "5036e883-1e45-48ee-92eb-38600f3e216f",
                             TwoFactorEnabled = false
                         });
                 });
@@ -402,6 +405,18 @@ namespace ProClubsPlayerFinder.API.Migrations
                     b.Property<int>("ClubId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Pending");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApiUserId")
@@ -427,6 +442,18 @@ namespace ProClubsPlayerFinder.API.Migrations
 
                     b.Property<int>("ClubId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Pending");
 
                     b.HasKey("Id");
 
@@ -516,14 +543,14 @@ namespace ProClubsPlayerFinder.API.Migrations
                     b.HasOne("ProClubsPlayerFinder.API.Data.ApiUser", "ApiUser")
                         .WithOne()
                         .HasForeignKey("ProClubsPlayerFinder.API.Data.Invite", "ApiUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("FK_Invites_Players_Receiver");
 
                     b.HasOne("ProClubsPlayerFinder.API.Data.Club", "Club")
                         .WithOne()
                         .HasForeignKey("ProClubsPlayerFinder.API.Data.Invite", "ClubId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("FK_Invites_Clubs_Sender");
 
@@ -537,14 +564,14 @@ namespace ProClubsPlayerFinder.API.Migrations
                     b.HasOne("ProClubsPlayerFinder.API.Data.ApiUser", "ApiUser")
                         .WithOne()
                         .HasForeignKey("ProClubsPlayerFinder.API.Data.Request", "ApiUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("FK_Requests_Players_Sender");
 
                     b.HasOne("ProClubsPlayerFinder.API.Data.Club", "Club")
                         .WithOne()
                         .HasForeignKey("ProClubsPlayerFinder.API.Data.Request", "ClubId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("FK_Requests_Clubs_Receiver");
 

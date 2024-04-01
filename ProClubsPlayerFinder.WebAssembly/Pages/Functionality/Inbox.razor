@@ -1,0 +1,222 @@
+﻿@page "/inbox"
+
+<div class="d-flex flex-row text-white">
+    <div class="col-lg-7 d-flex flex-column justify-content-center px-4 pt-4" style="background-color: black">
+        <h1 class="mb-4">Inbox</h1>
+        <div class="table-responsive">
+            <table class="table table-striped text-white">
+                <tbody>
+                    @if(AuthenticatedUserRole == "Club Owner")
+                    {
+                        @if (joinClubRequests.Count() > 0)
+                        {
+                            @foreach (var request in joinClubRequests)
+                            {
+                                <tr>
+                                    <td class="text-white" style="font-size: 1.4rem; border-bottom: 1px solid white;">@request.GamingPlatformAccountId requested to join your club.</td>
+                                    <td style="vertical-align: middle; border-bottom: 1px solid white; padding-left: 10px;">
+                                        <div class="btn-group d-flex align-items-end" role="group">
+                                            <button type="button" class="btn btn-success" @onclick="(e) => AcceptRequest(request)">Accept</button>
+                                            <button type="button" class="btn btn-danger" @onclick="(e) => RejectRequest(request)">Reject</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td style="vertical-align: middle; border-bottom: 1px solid white; padding-left: 10px;">
+                                    There are no player join requests, at the moment.
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else if (AuthenticatedUserRole == "Free Agent")
+                    {
+                        @if (joinClubInvites.Count() > 0)
+                        {
+                            @foreach (var invite in joinClubInvites)
+                            {
+                                <tr>
+                                    <td class="text-white" style="font-size: 1.4rem; border-bottom: 1px solid white;">@invite.ClubName want you to join their club.</td>
+                                    <td style="vertical-align: middle; border-bottom: 1px solid white; padding-left: 10px;">
+                                        <div class="btn-group d-flex align-items-end" role="group">
+                                            <button type="button" class="btn btn-success" @onclick="(e) => AcceptInvite(invite)">Accept</button>
+                                            <button type="button" class="btn btn-danger" @onclick="(e) => RejectInvite(invite)">Reject</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td class="text-white" style="font-size: 1.4rem; border-bottom: 1px solid white;">
+                                    There are no club join invites, at the moment.
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-5 backgroundWallpaperCss"> </div>
+</div>
+
+@code {
+    private List<JoinRequestDto> joinClubRequests = new List<JoinRequestDto>();
+    private List<ClubInviteDto> joinClubInvites = new List<ClubInviteDto>();
+    private string AuthenticatedUserId = "";
+    private string AuthenticatedUserRole = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage){
+                AuthenticatedUserRole = authStateProvider.GetCustomUserClaimsFromToken(stringToken, "").Role;
+
+                if (AuthenticatedUserRole == "Club Owner")
+                    joinClubRequests = await httpClient.GetFromJsonAsync<List<JoinRequestDto>>($"api/Clubs/GetClubJoinRequests/{AuthenticatedUserId}");
+                else if (AuthenticatedUserRole == "Free Agent")
+                    joinClubInvites = await httpClient.GetFromJsonAsync<List<ClubInviteDto>>($"api/Clubs/GetClubJoinInvites/{AuthenticatedUserId}");
+            }
+        }
+    }
+
+    private async Task AcceptRequest(JoinRequestDto requestDto)
+    {
+        var acceptPlayerConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Accept Player?",
+                text: "Are you sure you want to accept this player's request to join your club?", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+        if (acceptPlayerConfirm)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage){
+                    var httpResponse = await httpClient.GetAsync($"api/Clubs/AcceptPlayerJoinRequest/{requestDto.Id}");
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Player request accepted!",
+                                Text = requestDto.GamingPlatformAccountId + " has successfully joined the club!",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        joinClubRequests.Remove(requestDto);
+                    }
+                }             
+            }
+        }
+    }    
+
+    private async Task RejectRequest(JoinRequestDto requestDto)
+    {
+        var rejectPlayerConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Reject Player?",
+                text: "Are you sure you want to reject this player's request to join your club?", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+        if (rejectPlayerConfirm)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.GetAsync($"api/Clubs/RejectPlayerJoinRequest/{requestDto.Id}");
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Player request rejected!",
+                                Text = requestDto.GamingPlatformAccountId + "´s request to join the club has been rejected.",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        joinClubRequests.Remove(requestDto);
+                    }
+                }
+            }
+        }
+    }    
+    private async Task AcceptInvite(ClubInviteDto inviteDto)
+    {
+        var acceptPlayerConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Join Club?",
+                text: "Are you sure you want to accept this club's invite to join their club?", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+        if (acceptPlayerConfirm)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.GetAsync($"api/Players/AcceptClubJoinInvite/{inviteDto.Id}");
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Club invite accepted!",
+                                Text = "You have successfully joined " + inviteDto.ClubName + "!",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        joinClubInvites.Remove(inviteDto);
+                        await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Player");
+                        navManager.NavigateTo("/");
+                    }
+                }
+            }
+        }
+    }    
+    
+    private async Task RejectInvite(ClubInviteDto inviteDto)
+    {
+        var rejectPlayerConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Reject Club?",
+                text: "Are you sure you want to reject this club's invite to join their club?", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+        if (rejectPlayerConfirm)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.GetAsync($"api/Players/RejectPlayerJoinInvite/{inviteDto.Id}");
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Club invite rejected!",
+                                Text = "You have successfully joined " + inviteDto.ClubName + "!",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        joinClubInvites.Remove(inviteDto);
+                    }
+                }
+            }
+        }
+    }
+
+}
+

@@ -88,7 +88,7 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
                 }, "JwtAuth"));
         }
 
-        private static CustomUserClaims GetCustomUserClaimsFromToken(string jwtToken, string newRole)
+        public CustomUserClaims GetCustomUserClaimsFromToken(string jwtToken, string newRole)
         {
             if (string.IsNullOrEmpty(jwtToken)) return new CustomUserClaims();
 
@@ -109,12 +109,13 @@ namespace ProClubsPlayerFinder.WebAssembly.Providers
             var jwtToken = await localStorageService.GetItemAsStringAsync("token");
             var jwtTokenContent = jwtSecurityTokenHandler.ReadJwtToken(jwtToken);
             return jwtTokenContent.Claims.FirstOrDefault(claim => claim.Type == "uid")!.Value;
-        }   
+        }
 
         public async Task<string> CheckTokenExpiration(string jwtToken)
         {
+            
             DateTime tokenValidTo = jwtSecurityTokenHandler.ReadJwtToken(jwtToken).ValidTo;
-            if (DateTime.Now > tokenValidTo)
+            if (DateTime.UtcNow > tokenValidTo)
             {
                 await UpdateAuthenticationState("");
                 await sweetAlertService.ShowAlert(new AlertArgs

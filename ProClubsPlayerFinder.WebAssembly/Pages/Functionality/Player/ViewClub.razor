@@ -1,0 +1,94 @@
+﻿@page "/viewClub/{ClubId:int}/{SearchInputParam}"
+
+<div class="d-flex flex-row">
+    <div class="col-lg-6 d-flex flex-column justify-content-center px-4" style="background-color: black">
+        <h1 class="text-white mb-4">View Club Info</h1>
+
+        <div class="d-flex flex-row justify-content-start mb-2">
+            <div class="mt-2">
+                <label class="text-white" style="font-size: 1.2rem;">Club Name</label>
+                <div class="mt-1" style="color: #70f06c; font-size: 1.2rem;">@ClubModel.ClubName</div>
+            </div>
+            <div class="mt-2 ms-4">
+                <label class="text-white" style="font-size: 1.2rem;">Console</label>
+                <div class="mt-1" style="color: #70f06c; font-size: 1.2rem;">@ClubModel.Console</div>
+            </div>
+            <div class="mt-2 ms-4">
+                <label class="text-white" style="font-size: 1.2rem;">Players</label>
+                <div class="mt-1" style="color: #70f06c; font-size: 1.2rem;">@ClubModel.NumberOfPlayers</div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <label class="text-white" style="font-size: 1.2rem;">Description</label>
+            <div class="mt-1" style="height: 25vh; color: #70f06c;">@ClubModel.Description</div>
+        </div>
+        <div class="mt-4 d-flex justify-content-between">
+            <button class="btn btn-lg green-background text-black" @onclick="GoBackToSearch"> Go Back </button>
+            <button class="btn btn-lg btn-success text-white" @onclick="RequestToJoinClub">Request to Join</button>
+        </div>
+    </div>
+    <div class="col-lg-6 backgroundWallpaperCss"> </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public int ClubId { get; set; }
+
+    [Parameter]
+    public string SearchInputParam { get; set; }
+
+    private string AuthenticatedUserId = "";
+
+    ClubDetailsDto ClubModel = new ClubDetailsDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
+        var stringToken = await localStorageService.GetItemAsStringAsync("token");
+        if (stringToken != null)
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+            string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                ClubModel = await httpClient.GetFromJsonAsync<ClubDetailsDto>($"api/Clubs/GetClubDetails/{ClubId}");
+        }
+    }
+
+    private async Task RequestToJoinClub()
+    {
+        var requestClubConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Request Club Join?",
+            text: "Are you sure you want to request this club to join them?", icon: Icon.Warning,
+            abortText: "No", confirmText: "Yes", dangerMode: true));
+        if (requestClubConfirm)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            if (stringToken != null)
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                {
+                    var httpResponse = await httpClient.GetAsync($"api/Players/RequestToJoinClub/{ClubId}/{AuthenticatedUserId}");
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        await sweetAlertService.ShowAlert(new AlertArgs
+                            {
+                                Title = "Request sent!",
+                                Text = "You have successfully requested " + ClubModel.ClubName + " to join their club!",
+                                Icon = Icon.Success,
+                                DangerMode = false,
+                                Button = new { Text = "Close" }
+                            });
+                        navManager.NavigateTo("/");
+                    }
+                }
+            }
+        }
+    }
+
+    private void GoBackToSearch()
+    {
+        navManager.NavigateTo("/searchClubs/" + SearchInputParam);
+    }
+}

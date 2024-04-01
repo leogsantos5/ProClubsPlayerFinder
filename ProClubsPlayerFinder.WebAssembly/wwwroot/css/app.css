@@ -111,6 +111,14 @@ code {
     background-color: #70f06c;
 }
 
+.inboxIcon {
+    display: inline-block;
+    position: relative;
+    width: 1.8rem;
+    height: 1.8rem;
+    background-size: cover;
+}
+
 .backgroundWallpaperCss {
     background-image: url('../images/EAFC24Wallpaper2.png');
     background-size: cover;

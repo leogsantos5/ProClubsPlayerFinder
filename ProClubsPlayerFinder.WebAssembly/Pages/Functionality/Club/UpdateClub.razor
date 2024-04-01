@@ -55,7 +55,6 @@
             if (stringToken != null)
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
-
                 string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
                 if (tokenValidOrNot == Constants.TokenIsValidMessage)
                 {

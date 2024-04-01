@@ -6,6 +6,14 @@
         </div>
         <AuthorizeView>
             <Authorized>
+                @if (AuthenticatedUserRole == "Club Owner" || AuthenticatedUserRole == "Free Agent")
+                {
+                    <NavLink class="btn btn-lg btn-outline-dark" @onclick="GoToInbox">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="inboxIcon" viewBox="0 0 16 16">
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z" />
+                        </svg>
+                    </NavLink>
+                }
                 <label class="btn btn-lg" href=""> Hello @context.User?.Identity?.Name! </label>
                 <NavLink style="margin-right:8px;" class="btn btn-lg btn-outline-dark" @onclick="HandleLogout"> LOGOUT </NavLink>
             </Authorized>
@@ -18,18 +26,47 @@
 </nav>
 
 @code {
-    private bool collapseNavMenu = true;
+    private bool expandSubNav = false;
+    private bool IsUserLoggedIn = false;
+    private string AuthenticatedUserRole = "";
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
+    protected override async Task OnInitializedAsync()
     {
-        collapseNavMenu = !collapseNavMenu;
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        await CheckIfUserIsLoggedInAndSetRole(authState);
+        authStateProvider.AuthenticationStateChanged += HandleAuthenticationStateChanged;
+    }
+
+    private async void HandleAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        var authState = await task;
+        await CheckIfUserIsLoggedInAndSetRole(authState);
+        StateHasChanged();
+    }
+
+    private async Task CheckIfUserIsLoggedInAndSetRole(AuthenticationState authState)
+    {
+        IsUserLoggedIn = authState.User.Identity.IsAuthenticated;
+        if (IsUserLoggedIn)
+        {
+            var stringToken = await localStorageService.GetItemAsStringAsync("token");
+            AuthenticatedUserRole = authStateProvider.GetCustomUserClaimsFromToken(stringToken, "").Role;
+        }
+    }
+
+    private void ToggleSubNavMenu()
+    {
+        expandSubNav = !expandSubNav;
     }
 
     private async Task HandleLogout()
     {
         await authStateProvider.LogOut();
         navManager.NavigateTo("/");
+    }
+
+    private void GoToInbox()
+    {
+        navManager.NavigateTo("/inbox");
     }
 }

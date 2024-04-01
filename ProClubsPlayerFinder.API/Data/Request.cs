@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProClubsPlayerFinder.API.Data
 {
-    public class Invite
+    public class Request
     {
         public int Id { get; set; }
 

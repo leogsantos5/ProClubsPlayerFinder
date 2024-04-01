@@ -54,8 +54,8 @@
     {
         if (ClubPlayersList != null && ClubPlayersList.Count() != 0)
         {
-            foreach (var freeAgent in ClubPlayersList.OrderBy(p => p.GamingPlatformAccountId))
-                ClubPlayersQueryable = ClubPlayersQueryable.Concat(new[] { freeAgent }.AsQueryable());
+            foreach (var player in ClubPlayersList.OrderBy(p => p.GamingPlatformAccountId))
+                ClubPlayersQueryable = ClubPlayersQueryable.Concat(new[] { player }.AsQueryable());
         }
         else
             ClubPlayersQueryable = Enumerable.Empty<ApiUserDto>().AsQueryable();
@@ -90,7 +90,8 @@
                     {
                         // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
                         ClubPlayersList = await httpClient.GetFromJsonAsync<List<ApiUserDto>>($"api/Clubs/GetClubPlayers/" + AuthenticatedUserId + "/false");
-                        ConvertListToQueryable(); // refresh grid
+                        ClubPlayersQueryable = Enumerable.Empty<ApiUserDto>().AsQueryable();
+                        ConvertListToQueryable();
                     }
                 }
             }
