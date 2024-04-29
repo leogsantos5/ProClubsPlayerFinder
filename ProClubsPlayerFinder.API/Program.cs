@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using ProClubsPlayerFinder.API.Contracts;
 using ProClubsPlayerFinder.API.Data;
+using ProClubsPlayerFinder.API.Repositories;
 using System.Globalization;
 using System.Text;
 
@@ -21,6 +23,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IClubsRepository, ClubsRepository>();
+builder.Services.AddScoped<IPlayersRepository, PlayersRepository>();
 
 builder.Services.AddCors(options =>
 {

@@ -62,8 +62,15 @@
         {
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
             string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
-            if (tokenValidOrNot == Constants.TokenIsValidMessage)
-                FreeAgentsList = await httpClient.GetFromJsonAsync<List<ApiUserDto>>($"api/Players/GetFreeAgents");
+            try{
+                if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                    FreeAgentsList = await httpClient.GetFromJsonAsync<List<ApiUserDto>>($"api/Players/GetFreeAgents");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw new Exception("Error encountered while fetching Free Agents");
+            }
         }
     }
 

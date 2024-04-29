@@ -2,7 +2,7 @@
 
 <div class="d-flex flex-row">
     <div class="col-lg-7 d-flex flex-column justify-content-start pt-4" style="background-color: black; height: 100vh; color: white">
-        <h1 class="mb-3" style="margin-left: 10px">Search Free Agents</h1>
+        <h1 class="mb-3" style="margin-left: 10px">Club Players</h1>
         @if (ClubPlayersQueryable!.Count() == 0)
         {
             <h4 class="mt-4" style="margin-left: 10px">Your club has no players. Go back and search for Free Agents!</h4>
@@ -13,8 +13,7 @@
                 <PropertyColumn class="w-auto" Title="Name" Property="@(p => (p.FirstName + " " + p.LastName))" />
                 <PropertyColumn class="w-auto" Title="Age" Property="@(p => ComputeAgeFromBirthDate((DateTime) p.DateOfBirth!))" />
                 <PropertyColumn class="w-auto" Property="@(p => p.Console)" />
-                <PropertyColumn class="w-auto" Title="Username" Property="@(p => p.GamingPlatformAccountId)">
-                </PropertyColumn>
+                <PropertyColumn class="w-auto" Title="Username" Property="@(p => p.GamingPlatformAccountId)"/>
                 <PropertyColumn class="w-auto" Property="@(p => p.Country)" />
                 <TemplateColumn Title="Action">
                     <button class="btn btn-warning btn-block text-black" @onclick="@(() => RemovePlayerFromClub(context.Email!))"> Remove Player </button>

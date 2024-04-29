@@ -1,14 +1,13 @@
-﻿using Azure.Core;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ProClubsPlayerFinder.API.Contracts;
 using ProClubsPlayerFinder.API.Data;
 using ProClubsPlayerFinder.API.Migrations;
 using ProClubsPlayerFinder.ClassLibrary.DTOs.ApiUserDTOs;
 using ProClubsPlayerFinder.ClassLibrary.DTOs.ClassLibraryUserDTOs;
 using ProClubsPlayerFinder.ClassLibrary.DTOs.ClubDTOs;
-using Request = ProClubsPlayerFinder.API.Data.Request;
 
 namespace ProClubsPlayerFinder.API.Controllers
 {
@@ -19,29 +18,20 @@ namespace ProClubsPlayerFinder.API.Controllers
     {
         private readonly ClubsPlayerFinderEafc24Context context;
         private readonly UserManager<ApiUser> userManager;
+        private readonly IPlayersRepository playersRepository;
 
-        public PlayersController(UserManager<ApiUser> _userManager, ClubsPlayerFinderEafc24Context _context)
+        public PlayersController(UserManager<ApiUser> _userManager, ClubsPlayerFinderEafc24Context _context, IPlayersRepository playersRepository)
         {
             context = _context;
             userManager = _userManager;
+            this.playersRepository = playersRepository;
         }
 
         // GET: All Free Agents
         [HttpGet("GetFreeAgents")]
         public async Task<ActionResult<IEnumerable<ApiUserDto>>> GetFreeAgents()
-        {
-            var freeAgentsDtos = await context.Players.Where(p => p.ClubId == null)
-               .Select(player => new ApiUserDto
-               {
-                   Email = player.Email,
-                   FirstName = player.FirstName,
-                   LastName = player.LastName,
-                   DateOfBirth = player.DateOfBirth,
-                   Country = player.Country,
-                   GamingPlatformAccountId = player.GamingPlatformAccountId,
-                   Console = player.Console
-               }).Take(10).ToListAsync(); // Only gets free agents
-
+        {           
+            var freeAgentsDtos = playersRepository.GetFreeAgents();
             return Ok(freeAgentsDtos); 
         }
 
@@ -49,23 +39,11 @@ namespace ProClubsPlayerFinder.API.Controllers
         [HttpGet("GetPlayer/{idOrEmail}")]
         public async Task<ActionResult<UpdatePlayerDto>> GetPlayer(string? idOrEmail)
         {
-            ApiUser player = new();
-            if (idOrEmail.Contains("@"))
-                player = await context.Players.FirstOrDefaultAsync(c => c.Email == idOrEmail);
+            var apiUserDto = playersRepository.GetPlayer(idOrEmail).Result;
+            if (apiUserDto == null)
+                return NotFound();
             else
-                player = await context.Players.FirstOrDefaultAsync(c => c.Id == idOrEmail);
-            if (player == null)
-                return NotFound(); // Return a 404 Not Found if the player is not found
-
-            UpdatePlayerDto apiUserDto = new UpdatePlayerDto
-            {
-                Country = player.Country,
-                Console = player.Console,
-                GamingPlatformAccountId = player.GamingPlatformAccountId,
-                Description = player.Description!,
-            };
-
-            return Ok(apiUserDto);
+                return Ok(apiUserDto);
         }
         
         [HttpPut("UpdatePlayer/{id}")]
@@ -73,17 +51,11 @@ namespace ProClubsPlayerFinder.API.Controllers
         {
             try
             {
-                var player = await context.Players.FindAsync(id);
-                if (player == null)
-                    return NotFound(); // Or handle the case where the club with the given id is not found
-
-                player.Country = updatePlayerDto.Country;
-                player.GamingPlatformAccountId = updatePlayerDto.GamingPlatformAccountId;
-                player.Description = updatePlayerDto.Description;
-                player.Console = updatePlayerDto.Console;
-
-                await context.SaveChangesAsync();
-                return Ok();
+                var playerUpdatedSuccessfully = await playersRepository.UpdatePlayer(id, updatePlayerDto);
+                if (playerUpdatedSuccessfully)
+                    return Ok("Player updated successfully.");
+                else
+                    return StatusCode(500, new { Message = "Internal Server Error" });
             }
             catch
             {
@@ -97,23 +69,11 @@ namespace ProClubsPlayerFinder.API.Controllers
         {
             try
             {
-                Invite? invite = await context.Invites.Where(i => i.Id == inviteId).FirstOrDefaultAsync();
-                var newPlayerId = invite!.ApiUserId;
-                var newPlayer = await context.Players.FindAsync(newPlayerId);
-                var clubId = invite!.ClubId;
-                var club = context.Clubs.FindAsync(clubId).Result;
-                await userManager.RemoveFromRoleAsync(newPlayer, "Free Agent");
-                await userManager.AddToRoleAsync(newPlayer, "Player");
-                club!.Players.Add(newPlayer);
-
-                context.Invites.Remove(invite!); 
-                Request? request = await context.Requests.Where(i => i.ApiUserId == newPlayerId).FirstOrDefaultAsync();
-                if (request != null)
-                    context.Requests.Remove(request);
-
-                await context.SaveChangesAsync();
-
-                return Ok("Invite sucessfully accepted.");
+                var clubInviteAccepted = await playersRepository.AcceptClubJoinInvite(inviteId);
+                if (clubInviteAccepted)
+                    return Ok("Invite sucessfully accepted.");
+                else
+                    return StatusCode(500, new { Message = "Internal Server Error" });
             }
             catch (Exception ex)
             {
@@ -127,12 +87,11 @@ namespace ProClubsPlayerFinder.API.Controllers
         {
             try
             {
-                Invite? invite = await context.Invites.Where(i => i.Id == inviteId).FirstOrDefaultAsync();
-
-                context.Invites.Remove(invite!);
-                await context.SaveChangesAsync();
-
-                return Ok("Invite sucessfully rejected.");
+                var clubInviteRejected = await playersRepository.RejectClubJoinInvite(inviteId);
+                if (clubInviteRejected)
+                    return Ok("Invite sucessfully rejected.");
+                else
+                    return StatusCode(500, new { Message = "Internal Server Error" });
             }
             catch (Exception ex)
             {
@@ -147,15 +106,11 @@ namespace ProClubsPlayerFinder.API.Controllers
         {
             try
             {
-                Request request = new Request
-                {
-                    ClubId = clubId,
-                    ApiUserId = playerId
-                };
-                context.Requests.Add(request);
-                await context.SaveChangesAsync();
-
-                return Ok("Request sucessfully sent.");
+                var requestToJoinSuccessful = await playersRepository.RequestToJoinClub(clubId, playerId);
+                if (requestToJoinSuccessful)
+                    return Ok("Request sucessfully sent.");
+                else
+                    return StatusCode(500, new { Message = "Internal Server Error" });
             }
             catch (Exception ex)
             {
