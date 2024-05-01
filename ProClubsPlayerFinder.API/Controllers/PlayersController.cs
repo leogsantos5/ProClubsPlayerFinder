@@ -45,7 +45,24 @@ namespace ProClubsPlayerFinder.API.Controllers
             else
                 return Ok(apiUserDto);
         }
-        
+
+        [HttpGet("LeaveClub/{idOrEmail}")]
+        public async Task<IActionResult> LeaveClub(string? idOrEmail)
+        {
+            try
+            {
+                var playerLeftSuccessfully = playersRepository.LeaveClub(idOrEmail).Result;
+                if (playerLeftSuccessfully)
+                    return Ok("Player left successfully.");
+                else
+                    return StatusCode(500, new { Message = "Internal Server Error" });
+            } 
+            catch 
+            {
+                return StatusCode(500, new { Message = "Internal Server Error" });
+            }
+        }
+
         [HttpPut("UpdatePlayer/{id}")]
         public async Task<IActionResult> UpdatePlayer(string id, UpdatePlayerDto updatePlayerDto)
         {

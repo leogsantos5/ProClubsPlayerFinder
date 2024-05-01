@@ -8,6 +8,7 @@ namespace ProClubsPlayerFinder.API.Contracts
     {
         List<ApiUserDto> GetFreeAgents();
         Task<UpdatePlayerDto> GetPlayer(string? idOrEmail);
+        Task<bool> LeaveClub(string? idOrEmail);
         Task<bool> UpdatePlayer(string id, UpdatePlayerDto updatePlayerDto);
         Task<bool> AcceptClubJoinInvite(int inviteId);
         Task<bool> RejectClubJoinInvite(int inviteId);

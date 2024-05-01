@@ -60,6 +60,21 @@ namespace ProClubsPlayerFinder.API.Repositories
             return apiUserDto;
         }
 
+        public async Task<bool> LeaveClub(string? idOrEmail)
+        {
+            ApiUser player = new();
+            if (idOrEmail.Contains("@"))
+                player = await context.Players.FirstOrDefaultAsync(c => c.Email == idOrEmail);
+            else
+                player = GetAsync(idOrEmail).Result;
+
+            player.ClubId = null;
+            await userManager.RemoveFromRoleAsync(player, "Player");
+            await userManager.AddToRoleAsync(player, "Free Agent");
+            await context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<bool> UpdatePlayer(string id, UpdatePlayerDto updatePlayerDto)
         {
             var player = await context.Players.FindAsync(id);

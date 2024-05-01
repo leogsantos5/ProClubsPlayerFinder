@@ -61,6 +61,7 @@
                 </tbody>
             </table>
         </div>
+        <button class="btn btn-lg btn-success green-background btn-block text-black mx-auto mt-4" @onclick="GetClubJoinRequestsOrInvites">Refresh Club Requests</button>
     </div>
     <div class="col-lg-5 backgroundWallpaperCss"> </div>
 </div>
@@ -73,19 +74,27 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await GetClubJoinRequestsOrInvites();
+    }
+
+    private async Task GetClubJoinRequestsOrInvites()
+    {
         AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
         var stringToken = await localStorageService.GetItemAsStringAsync("token");
         if (stringToken != null)
         {
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
             string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
-            if (tokenValidOrNot == Constants.TokenIsValidMessage){
+            if (tokenValidOrNot == Constants.TokenIsValidMessage)
+            {
                 AuthenticatedUserRole = authStateProvider.GetCustomUserClaimsFromToken(stringToken, "").Role;
 
                 if (AuthenticatedUserRole == "Club Owner")
                     joinClubRequests = await httpClient.GetFromJsonAsync<List<JoinRequestDto>>($"api/Clubs/GetClubJoinRequests/{AuthenticatedUserId}");
                 else if (AuthenticatedUserRole == "Free Agent")
                     joinClubInvites = await httpClient.GetFromJsonAsync<List<ClubInviteDto>>($"api/Clubs/GetClubJoinInvites/{AuthenticatedUserId}");
+
+                await js.InvokeVoidAsync("eval", "document.activeElement.blur();");
             }
         }
     }

@@ -1,21 +1,53 @@
 ﻿<div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" href="updatePlayer"> Edit your profile </NavLink>
 </div>
-<div class="mt-4 text-center">
+@* <div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" href="freeagents/searchforclub"> Chat with your teamates! </NavLink>
 </div>
 <div class="mt-4 text-center">
     <NavLink type="submit" class="btn btn-lg btn-success green-background btn-block text-black" href="freeagents/searchforclub"> Club group chat </NavLink>
-</div>
+</div> *@
 <div class="mt-4 text-center">
-    <NavLink type="submit" class="btn btn-lg btn-danger btn-block text-black" href="freeagents/searchforclub"> Leave the Club </NavLink>
+    <NavLink type="submit" class="btn btn-lg btn-danger btn-block text-black" @onclick="HandleLeaveClub"> Leave the Club </NavLink>
 </div>
 
 @code {
-    // private string AuthenticatedUserId = "";
+    private string AuthenticatedUserId = "";
 
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
-    // }
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticatedUserId = await authStateProvider.GetUserIdFromToken();
+    }
+
+    private async Task HandleLeaveClub()
+    {
+        try
+        {
+            var leaveConfirm = await sweetAlertService.ConfirmAsync(new ConfirmArgs(title: "Leave club?",
+                text: "Are you sure you want to leave your club? You will be a Free Agent.", icon: Icon.Warning,
+                abortText: "No", confirmText: "Yes", dangerMode: true));
+            if (leaveConfirm)
+            {
+                var stringToken = await localStorageService.GetItemAsStringAsync("token");
+                if (stringToken != null)
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", stringToken);
+                    string tokenValidOrNot = await authStateProvider.CheckTokenExpiration(stringToken);
+                    if (tokenValidOrNot == Constants.TokenIsValidMessage)
+                    {
+                        var httpResponse = await httpClient.GetAsync("api/Players/LeaveClub/" + AuthenticatedUserId);
+                        if (httpResponse.IsSuccessStatusCode)
+                        {
+                            await authStateProvider.UpdateNewAuthStateWithChangedRole(stringToken!, "Free Agent");
+                            navManager.NavigateTo("/");
+                        }
+                    }
+                }
+            }
+        }
+        catch (ApiException)
+        {
+            await js.InvokeVoidAsync("alert", "Something went wrong, try again later");
+        }
+    }
 }
